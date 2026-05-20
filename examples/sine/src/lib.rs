@@ -76,15 +76,9 @@ fn run_sine() -> Result<(), oboe::Error> {
         stream.get_buffer_capacity_in_frames()
     );
     log::info!("  Buffer size:     {}", stream.get_buffer_size_in_frames());
-    log::info!(
-        "  Performance mode: {:?}",
-        stream.get_performance_mode()
-    );
+    log::info!("  Performance mode: {:?}", stream.get_performance_mode());
     log::info!("  Sharing mode:    {:?}", stream.get_sharing_mode());
-    log::info!(
-        "  XRun supported:  {}",
-        stream.is_xrun_count_supported()
-    );
+    log::info!("  XRun supported:  {}", stream.is_xrun_count_supported());
 
     stream.start()?;
     log::info!("Stream started — playing 440 Hz sine for 5 seconds");

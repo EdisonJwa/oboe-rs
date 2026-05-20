@@ -10,11 +10,12 @@ use std::{
 use crate::{set_input_callback, set_output_callback};
 
 use super::{
-    audio_stream_base_fmt, wrap_status, AudioApi, AudioInputCallback, AudioOutputCallback,
-    AudioStreamAsync, AudioStreamHandle, AudioStreamSync, ContentType, Input, InputPreset,
-    IsChannelCount, IsDirection, IsFormat, IsFrameType, I24, Mono, Output, PerformanceMode,
-    RawAudioStreamBase, Result, SampleRateConversionQuality, SessionId, SharingMode, Stereo,
-    Unspecified, Usage,
+    audio_stream_base_fmt, wrap_status, AllowedCapturePolicy, AudioApi, AudioInputCallback,
+    AudioOutputCallback, AudioStreamAsync, AudioStreamHandle, AudioStreamSync, ChannelMask,
+    ContentType, Input, InputPreset, IsChannelCount, IsDirection, IsFormat, IsFrameType, Mono,
+    Output, PerformanceMode, PrivacySensitiveMode, RawAudioStreamBase, Result,
+    SampleRateConversionQuality, SessionId, SharingMode, SpatializationBehavior, Stereo,
+    Unspecified, Usage, I24,
 };
 
 #[repr(transparent)]
@@ -126,6 +127,11 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
         let mut builder = self.convert();
         builder._raw_base_mut().mChannelCount = X::CHANNEL_COUNT as i32;
         builder
+    }
+
+    pub fn set_channel_mask(mut self, channel_mask: ChannelMask) -> Self {
+        self._raw_base_mut().mChannelMask = channel_mask as u32;
+        self
     }
 
     /**
@@ -331,6 +337,26 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
      */
     pub fn set_usage(mut self, usage: Usage) -> Self {
         self._raw_base_mut().mUsage = usage as i32;
+        self
+    }
+
+    pub fn set_allowed_capture_policy(mut self, policy: AllowedCapturePolicy) -> Self {
+        self._raw_base_mut().mAllowedCapturePolicy = policy as i32;
+        self
+    }
+
+    pub fn set_privacy_sensitive_mode(mut self, mode: PrivacySensitiveMode) -> Self {
+        self._raw_base_mut().mPrivacySensitiveMode = mode as i32;
+        self
+    }
+
+    pub fn set_is_content_spatialized(mut self, is_spatialized: bool) -> Self {
+        self._raw_base_mut().mIsContentSpatialized = is_spatialized;
+        self
+    }
+
+    pub fn set_spatialization_behavior(mut self, behavior: SpatializationBehavior) -> Self {
+        self._raw_base_mut().mSpatializationBehavior = behavior as i32;
         self
     }
 

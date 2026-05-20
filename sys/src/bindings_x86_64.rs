@@ -1681,6 +1681,47 @@ extern "C" {
     pub fn oboe_AudioStream_getFramesPerBurst(oboeStream: *mut oboe_AudioStream) -> i32;
 }
 extern "C" {
+    #[link_name = "\u{1}_ZN4oboe19AudioStream_releaseEPNS_11AudioStreamE"]
+    pub fn oboe_AudioStream_release(oboeStream: *mut oboe_AudioStream) -> oboe_Result;
+}
+extern "C" {
+    #[link_name = "\u{1}_ZN4oboe28AudioStream_getBytesPerFrameEPNS_11AudioStreamE"]
+    pub fn oboe_AudioStream_getBytesPerFrame(oboeStream: *mut oboe_AudioStream) -> i32;
+}
+extern "C" {
+    #[link_name = "\u{1}_ZN4oboe38AudioStream_getLastErrorCallbackResultEPNS_11AudioStreamE"]
+    pub fn oboe_AudioStream_getLastErrorCallbackResult(
+        oboeStream: *mut oboe_AudioStream,
+    ) -> oboe_Result;
+}
+extern "C" {
+    #[link_name = "\u{1}_ZN4oboe37AudioStream_getDelayBeforeCloseMillisEPNS_11AudioStreamE"]
+    pub fn oboe_AudioStream_getDelayBeforeCloseMillis(oboeStream: *mut oboe_AudioStream) -> i32;
+}
+extern "C" {
+    #[link_name = "\u{1}_ZN4oboe37AudioStream_setDelayBeforeCloseMillisEPNS_11AudioStreamEi"]
+    pub fn oboe_AudioStream_setDelayBeforeCloseMillis(
+        oboeStream: *mut oboe_AudioStream,
+        delay: i32,
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}_ZN4oboe37AudioStream_setPerformanceHintEnabledEPNS_11AudioStreamEb"]
+    pub fn oboe_AudioStream_setPerformanceHintEnabled(
+        oboeStream: *mut oboe_AudioStream,
+        enabled: bool,
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}_ZN4oboe36AudioStream_isPerformanceHintEnabledEPNS_11AudioStreamE"]
+    pub fn oboe_AudioStream_isPerformanceHintEnabled(oboeStream: *mut oboe_AudioStream) -> bool;
+}
+extern "C" {
+    #[link_name = "\u{1}_ZN4oboe22AudioStream_usesAAudioEPNS_11AudioStreamE"]
+    pub fn oboe_AudioStream_usesAAudio(oboeStream: *mut oboe_AudioStream) -> bool;
+}
+
+extern "C" {
     #[link_name = "\u{1}_ZN4oboe34AudioStream_calculateLatencyMillisEPNS_11AudioStreamE"]
     pub fn oboe_AudioStream_calculateLatencyMillis(
         oboeStream: *mut oboe_AudioStream,

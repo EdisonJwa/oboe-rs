@@ -25,6 +25,31 @@ namespace oboe {
     builder->setAudioApi(api);
   }
 
+  void AudioStreamBuilder_setChannelMask(AudioStreamBuilder *builder,
+                                         ChannelMask channelMask) {
+    builder->setChannelMask(channelMask);
+  }
+
+  void AudioStreamBuilder_setAllowedCapturePolicy(AudioStreamBuilder *builder,
+                                                  AllowedCapturePolicy policy) {
+    builder->setAllowedCapturePolicy(policy);
+  }
+
+  void AudioStreamBuilder_setPrivacySensitiveMode(AudioStreamBuilder *builder,
+                                                  PrivacySensitiveMode mode) {
+    builder->setPrivacySensitiveMode(mode);
+  }
+
+  void AudioStreamBuilder_setIsContentSpatialized(AudioStreamBuilder *builder,
+                                                  bool isSpatialized) {
+    builder->setIsContentSpatialized(isSpatialized);
+  }
+
+  void AudioStreamBuilder_setSpatializationBehavior(AudioStreamBuilder *builder,
+                                                    SpatializationBehavior behavior) {
+    builder->setSpatializationBehavior(behavior);
+  }
+
   /// Takes ownership of context (drop_context will be called to free it).
   void AudioStreamBuilder_setCallback(AudioStreamBuilder *builder,
                                       void *context,

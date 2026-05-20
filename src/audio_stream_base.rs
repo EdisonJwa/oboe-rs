@@ -4,8 +4,9 @@ use num_traits::FromPrimitive;
 use std::fmt::{self, Display};
 
 use super::{
-    AudioFormat, ChannelCount, ContentType, Direction, InputPreset, PerformanceMode,
-    RawAudioStreamBase, SampleRateConversionQuality, SessionId, SharingMode, Usage,
+    AllowedCapturePolicy, AudioFormat, ChannelCount, ChannelMask, ContentType, Direction,
+    InputPreset, PerformanceMode, PrivacySensitiveMode, RawAudioStreamBase,
+    SampleRateConversionQuality, SessionId, SharingMode, SpatializationBehavior, Usage,
 };
 
 /**
@@ -16,6 +17,8 @@ pub trait AudioStreamBase {
      * Get actual number of channels
      */
     fn get_channel_count(&self) -> ChannelCount;
+
+    fn get_channel_mask(&self) -> ChannelMask;
 
     /**
      * Get actual stream direction
@@ -39,6 +42,8 @@ pub trait AudioStreamBase {
      */
     fn get_format(&self) -> AudioFormat;
 
+    fn get_hardware_format(&self) -> AudioFormat;
+
     /**
      * Query the maximum number of frames that can be filled without blocking.
      * If the stream has been closed the last known value will be returned.
@@ -58,6 +63,14 @@ pub trait AudioStreamBase {
     fn get_performance_mode(&self) -> PerformanceMode;
 
     fn get_usage(&self) -> Usage;
+
+    fn get_allowed_capture_policy(&self) -> AllowedCapturePolicy;
+
+    fn get_privacy_sensitive_mode(&self) -> PrivacySensitiveMode;
+    fn is_content_spatialized(&self) -> bool;
+    fn get_spatialization_behavior(&self) -> SpatializationBehavior;
+    fn get_hardware_channel_count(&self) -> i32;
+    fn get_hardware_sample_rate(&self) -> i32;
 
     /**
      * Get the stream's content type
@@ -95,6 +108,10 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
         FromPrimitive::from_i32(self._raw_base().mChannelCount).unwrap_or_default()
     }
 
+    fn get_channel_mask(&self) -> ChannelMask {
+        FromPrimitive::from_u32(self._raw_base().mChannelMask).unwrap_or_default()
+    }
+
     fn get_direction(&self) -> Direction {
         FromPrimitive::from_i32(self._raw_base().mDirection).unwrap_or_default()
     }
@@ -109,6 +126,10 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
 
     fn get_format(&self) -> AudioFormat {
         FromPrimitive::from_i32(self._raw_base().mFormat).unwrap_or_default()
+    }
+
+    fn get_hardware_format(&self) -> AudioFormat {
+        FromPrimitive::from_i32(self._raw_base().mHardwareFormat).unwrap_or_default()
     }
 
     fn get_buffer_size_in_frames(&self) -> i32 {
@@ -129,6 +150,30 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
 
     fn get_usage(&self) -> Usage {
         FromPrimitive::from_i32(self._raw_base().mUsage).unwrap_or_default()
+    }
+
+    fn get_allowed_capture_policy(&self) -> AllowedCapturePolicy {
+        FromPrimitive::from_i32(self._raw_base().mAllowedCapturePolicy).unwrap_or_default()
+    }
+
+    fn get_privacy_sensitive_mode(&self) -> PrivacySensitiveMode {
+        FromPrimitive::from_i32(self._raw_base().mPrivacySensitiveMode).unwrap_or_default()
+    }
+
+    fn is_content_spatialized(&self) -> bool {
+        self._raw_base().mIsContentSpatialized
+    }
+
+    fn get_spatialization_behavior(&self) -> SpatializationBehavior {
+        FromPrimitive::from_i32(self._raw_base().mSpatializationBehavior).unwrap_or_default()
+    }
+
+    fn get_hardware_channel_count(&self) -> i32 {
+        self._raw_base().mHardwareChannelCount
+    }
+
+    fn get_hardware_sample_rate(&self) -> i32 {
+        self._raw_base().mHardwareSampleRate
     }
 
     fn get_content_type(&self) -> ContentType {

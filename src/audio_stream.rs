@@ -26,6 +26,8 @@ pub const DEFAULT_TIMEOUT_NANOS: i64 = 2000 * NANOS_PER_MILLISECOND;
  * Safe base trait for Oboe audio stream.
  */
 pub trait AudioStreamSafe: AudioStreamBase {
+    fn release(&mut self) -> Status;
+
     /**
      * Query the current state, eg. `StreamState::Pausing`
      */
@@ -67,9 +69,7 @@ pub trait AudioStreamSafe: AudioStreamBase {
      * and the sample format. For example, a 2 channel floating point stream will have
      * 2 * 4 = 8 bytes per frame.
      */
-    fn get_bytes_per_frame(&mut self) -> i32 {
-        self.get_channel_count() as i32 * self.get_bytes_per_sample()
-    }
+    fn get_bytes_per_frame(&mut self) -> i32;
 
     /**
      * Get the number of bytes per sample. This is calculated using the sample format. For example,
@@ -134,6 +134,22 @@ pub trait AudioStreamSafe: AudioStreamBase {
      * Returns the number of frames of data currently in the buffer
      */
     fn get_available_frames(&mut self) -> Result<i32>;
+
+    fn wait_for_available_frames(
+        &mut self,
+        num_frames: i32,
+        timeout_nanoseconds: i64,
+    ) -> Result<i32>;
+
+    fn get_last_error_callback_result(&mut self) -> Status;
+
+    fn get_delay_before_close_millis(&mut self) -> i32;
+
+    fn set_delay_before_close_millis(&mut self, delay: i32);
+
+    fn set_performance_hint_enabled(&mut self, enabled: bool);
+
+    fn is_performance_hint_enabled(&mut self) -> bool;
 }
 
 /**
@@ -225,17 +241,6 @@ pub trait AudioStream: AudioStreamSafe {
         input_state: StreamState,
         timeout_nanoseconds: i64,
     ) -> Result<StreamState>;
-
-    /**
-     * Wait until the stream has a minimum amount of data available in its buffer.
-     * This can be used with an EXCLUSIVE MMAP input stream to avoid reading data too close to
-     * the DSP write position, which may cause glitches.
-     */
-    fn wait_for_available_frames(
-        &mut self,
-        num_frames: i32,
-        timeout_nanoseconds: i64,
-    ) -> Result<i32>;
 }
 
 /**
@@ -349,6 +354,10 @@ pub trait AudioOutputStreamSync: AudioOutputStream {
 }
 
 impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
+    fn release(&mut self) -> Status {
+        wrap_status(unsafe { ffi::oboe_AudioStream_release(self._raw_stream_mut()) })
+    }
+
     fn set_buffer_size_in_frames(&mut self, requested_frames: i32) -> Result<i32> {
         wrap_result(unsafe {
             ffi::oboe_AudioStream_setBufferSizeInFrames(self._raw_stream_mut(), requested_frames)
@@ -376,8 +385,12 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
         unsafe { ffi::oboe_AudioStream_getFramesPerBurst(self._raw_stream_mut()) }
     }
 
+    fn get_bytes_per_frame(&mut self) -> i32 {
+        unsafe { ffi::oboe_AudioStream_getBytesPerFrame(self._raw_stream_mut()) }
+    }
+
     fn get_bytes_per_sample(&mut self) -> i32 {
-        unsafe { ffi::oboe_AudioStream_getBytesPerSample(self._raw_stream_mut()) }
+        unsafe { ffi::oboe_AudioStream_getBytesPerSample(self._raw_stream()) }
     }
 
     fn calculate_latency_millis(&mut self) -> Result<f64> {
@@ -398,8 +411,48 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
             .unwrap_or(AudioApi::Unspecified)
     }
 
+    fn uses_aaudio(&self) -> bool {
+        unsafe { ffi::oboe_AudioStream_usesAAudio(self._raw_stream() as *const _ as *mut _) }
+    }
+
     fn get_available_frames(&mut self) -> Result<i32> {
         wrap_result(unsafe { ffi::oboe_AudioStream_getAvailableFrames(self._raw_stream_mut()) })
+    }
+
+    fn wait_for_available_frames(
+        &mut self,
+        num_frames: i32,
+        timeout_nanoseconds: i64,
+    ) -> Result<i32> {
+        wrap_result(unsafe {
+            ffi::oboe_AudioStream_waitForAvailableFrames(
+                self._raw_stream_mut(),
+                num_frames,
+                timeout_nanoseconds,
+            )
+        })
+    }
+
+    fn get_last_error_callback_result(&mut self) -> Status {
+        wrap_status(unsafe {
+            ffi::oboe_AudioStream_getLastErrorCallbackResult(self._raw_stream_mut())
+        })
+    }
+
+    fn get_delay_before_close_millis(&mut self) -> i32 {
+        unsafe { ffi::oboe_AudioStream_getDelayBeforeCloseMillis(self._raw_stream_mut()) }
+    }
+
+    fn set_delay_before_close_millis(&mut self, delay: i32) {
+        unsafe { ffi::oboe_AudioStream_setDelayBeforeCloseMillis(self._raw_stream_mut(), delay) }
+    }
+
+    fn set_performance_hint_enabled(&mut self, enabled: bool) {
+        unsafe { ffi::oboe_AudioStream_setPerformanceHintEnabled(self._raw_stream_mut(), enabled) }
+    }
+
+    fn is_performance_hint_enabled(&mut self) -> bool {
+        unsafe { ffi::oboe_AudioStream_isPerformanceHintEnabled(self._raw_stream_mut()) }
     }
 }
 
@@ -453,20 +506,6 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStream for T {
             )
         })
         .map(|_| unsafe { next_state.assume_init() })
-    }
-
-    fn wait_for_available_frames(
-        &mut self,
-        num_frames: i32,
-        timeout_nanoseconds: i64,
-    ) -> Result<i32> {
-        wrap_result(unsafe {
-            ffi::oboe_AudioStream_waitForAvailableFrames(
-                self._raw_stream_mut(),
-                num_frames,
-                timeout_nanoseconds,
-            )
-        })
     }
 }
 

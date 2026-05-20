@@ -437,6 +437,115 @@ pub enum ChannelCount {
     Stereo = ffi::oboe_ChannelCount_Stereo,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
+#[repr(u32)]
+#[allow(non_camel_case_types)]
+pub enum ChannelMask {
+    #[default]
+    Unspecified = ffi::oboe_ChannelMask_Unspecified,
+    FrontLeft = ffi::oboe_ChannelMask_FrontLeft,
+    FrontRight = ffi::oboe_ChannelMask_FrontRight,
+    FrontCenter = ffi::oboe_ChannelMask_FrontCenter,
+    LowFrequency = ffi::oboe_ChannelMask_LowFrequency,
+    BackLeft = ffi::oboe_ChannelMask_BackLeft,
+    BackRight = ffi::oboe_ChannelMask_BackRight,
+    FrontLeftOfCenter = ffi::oboe_ChannelMask_FrontLeftOfCenter,
+    FrontRightOfCenter = ffi::oboe_ChannelMask_FrontRightOfCenter,
+    BackCenter = ffi::oboe_ChannelMask_BackCenter,
+    SideLeft = ffi::oboe_ChannelMask_SideLeft,
+    SideRight = ffi::oboe_ChannelMask_SideRight,
+    TopCenter = ffi::oboe_ChannelMask_TopCenter,
+    TopFrontLeft = ffi::oboe_ChannelMask_TopFrontLeft,
+    TopFrontCenter = ffi::oboe_ChannelMask_TopFrontCenter,
+    TopFrontRight = ffi::oboe_ChannelMask_TopFrontRight,
+    TopBackLeft = ffi::oboe_ChannelMask_TopBackLeft,
+    TopBackCenter = ffi::oboe_ChannelMask_TopBackCenter,
+    TopBackRight = ffi::oboe_ChannelMask_TopBackRight,
+    TopSideLeft = ffi::oboe_ChannelMask_TopSideLeft,
+    TopSideRight = ffi::oboe_ChannelMask_TopSideRight,
+    BottomFrontLeft = ffi::oboe_ChannelMask_BottomFrontLeft,
+    BottomFrontCenter = ffi::oboe_ChannelMask_BottomFrontCenter,
+    BottomFrontRight = ffi::oboe_ChannelMask_BottomFrontRight,
+    LowFrequency2 = ffi::oboe_ChannelMask_LowFrequency2,
+    FrontWideLeft = ffi::oboe_ChannelMask_FrontWideLeft,
+    FrontWideRight = ffi::oboe_ChannelMask_FrontWideRight,
+    Stereo = ffi::oboe_ChannelMask_Stereo,
+    CM2Point1 = ffi::oboe_ChannelMask_CM2Point1,
+    Tri = ffi::oboe_ChannelMask_Tri,
+    TriBack = ffi::oboe_ChannelMask_TriBack,
+    CM3Point1 = ffi::oboe_ChannelMask_CM3Point1,
+    CM2Point0Point2 = ffi::oboe_ChannelMask_CM2Point0Point2,
+    CM2Point1Point2 = ffi::oboe_ChannelMask_CM2Point1Point2,
+    CM3Point0Point2 = ffi::oboe_ChannelMask_CM3Point0Point2,
+    CM3Point1Point2 = ffi::oboe_ChannelMask_CM3Point1Point2,
+    Quad = ffi::oboe_ChannelMask_Quad,
+    QuadSide = ffi::oboe_ChannelMask_QuadSide,
+    Surround = ffi::oboe_ChannelMask_Surround,
+    Penta = ffi::oboe_ChannelMask_Penta,
+    CM5Point1 = ffi::oboe_ChannelMask_CM5Point1,
+    CM5Point1Side = ffi::oboe_ChannelMask_CM5Point1Side,
+    CM6Point1 = ffi::oboe_ChannelMask_CM6Point1,
+    CM7Point1 = ffi::oboe_ChannelMask_CM7Point1,
+    CM5Point1Point2 = ffi::oboe_ChannelMask_CM5Point1Point2,
+    CM5Point1Point4 = ffi::oboe_ChannelMask_CM5Point1Point4,
+    CM7Point1Point2 = ffi::oboe_ChannelMask_CM7Point1Point2,
+    CM7Point1Point4 = ffi::oboe_ChannelMask_CM7Point1Point4,
+    CM9Point1Point4 = ffi::oboe_ChannelMask_CM9Point1Point4,
+    CM9Point1Point6 = ffi::oboe_ChannelMask_CM9Point1Point6,
+    FrontBack = ffi::oboe_ChannelMask_FrontBack,
+}
+
+impl ChannelMask {
+    #[allow(non_upper_case_globals)]
+    pub const Mono: Self = Self::FrontLeft;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
+#[repr(i32)]
+pub enum AllowedCapturePolicy {
+    #[default]
+    Unspecified = ffi::oboe_AllowedCapturePolicy_Unspecified,
+    All = ffi::oboe_AllowedCapturePolicy_All,
+    System = ffi::oboe_AllowedCapturePolicy_System,
+    None = ffi::oboe_AllowedCapturePolicy_None,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
+#[repr(i32)]
+pub enum PrivacySensitiveMode {
+    #[default]
+    Unspecified = ffi::oboe_PrivacySensitiveMode_Unspecified,
+    Disabled = ffi::oboe_PrivacySensitiveMode_Disabled,
+    Enabled = ffi::oboe_PrivacySensitiveMode_Enabled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
+#[repr(i32)]
+pub enum SpatializationBehavior {
+    #[default]
+    Unspecified = ffi::oboe_SpatializationBehavior_Unspecified,
+    Auto = ffi::oboe_SpatializationBehavior_Auto,
+    Never = ffi::oboe_SpatializationBehavior_Never,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
+#[repr(i32)]
+pub enum FlushFromAccuracy {
+    #[default]
+    Undefined = 0,
+    Accurate = 1,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
+#[repr(i32)]
+pub enum MMapPolicy {
+    #[default]
+    Unspecified = -1,
+    Never = 1,
+    Auto = 2,
+    Always = 3,
+}
+
 /**
  * The default (optimal) audio streaming values.
  *

@@ -23,6 +23,10 @@ namespace oboe {
     return oboeStream->close();
   }
 
+  Result AudioStream_release(AudioStream *oboeStream) {
+    return oboeStream->release();
+  }
+
   Result AudioStream_requestStart(AudioStream *oboeStream) {
     return oboeStream->requestStart();
   }
@@ -71,6 +75,64 @@ namespace oboe {
     return oboeStream->getFramesPerBurst();
   }
 
+  int32_t AudioStream_getBytesPerFrame(AudioStream *oboeStream) {
+    return oboeStream->getBytesPerFrame();
+  }
+
+  int32_t AudioStream_getBytesPerSample(AudioStream *oboeStream) {
+    return oboeStream->getBytesPerSample();
+  }
+
+  int64_t AudioStream_getFramesWritten(AudioStream *oboeStream) {
+    return oboeStream->getFramesWritten();
+  }
+
+  int64_t AudioStream_getFramesRead(AudioStream *oboeStream) {
+    return oboeStream->getFramesRead();
+  }
+
+  ResultWithValue<FrameTimestamp> AudioStream_getTimestamp(AudioStream *oboeStream,
+                                                           clockid_t clockId) {
+    return oboeStream->getTimestamp(clockId);
+  }
+
+  ResultWithValue<int32_t> AudioStream_getAvailableFrames(AudioStream *oboeStream) {
+    return oboeStream->getAvailableFrames();
+  }
+
+  ResultWithValue<int32_t>
+  AudioStream_waitForAvailableFrames(AudioStream *oboeStream,
+                                     int32_t numFrames,
+                                     int64_t timeoutNanoseconds) {
+    return oboeStream->waitForAvailableFrames(numFrames, timeoutNanoseconds);
+  }
+
+  Result AudioStream_getLastErrorCallbackResult(AudioStream *oboeStream) {
+    return oboeStream->getLastErrorCallbackResult();
+  }
+
+  int32_t AudioStream_getDelayBeforeCloseMillis(AudioStream *oboeStream) {
+    return oboeStream->getDelayBeforeCloseMillis();
+  }
+
+  void AudioStream_setDelayBeforeCloseMillis(AudioStream *oboeStream,
+                                             int32_t delay) {
+    oboeStream->setDelayBeforeCloseMillis(delay);
+  }
+
+  void AudioStream_setPerformanceHintEnabled(AudioStream *oboeStream,
+                                             bool enabled) {
+    oboeStream->setPerformanceHintEnabled(enabled);
+  }
+
+  bool AudioStream_isPerformanceHintEnabled(AudioStream *oboeStream) {
+    return oboeStream->isPerformanceHintEnabled();
+  }
+
+  bool AudioStream_usesAAudio(AudioStream *oboeStream) {
+    return oboeStream->usesAAudio();
+  }
+
   ResultWithValue<double>
   AudioStream_calculateLatencyMillis(AudioStream *oboeStream) {
     return oboeStream->calculateLatencyMillis();
@@ -96,5 +158,37 @@ namespace oboe {
 
   AudioStreamBase* AudioStream_getBase(AudioStream *oboeStream) {
     return static_cast<AudioStreamBase*>(oboeStream);
+  }
+
+  ChannelMask AudioStreamBase_getChannelMask(AudioStreamBase *base) {
+    return base->getChannelMask();
+  }
+
+  AllowedCapturePolicy AudioStreamBase_getAllowedCapturePolicy(AudioStreamBase *base) {
+    return base->getAllowedCapturePolicy();
+  }
+
+  PrivacySensitiveMode AudioStreamBase_getPrivacySensitiveMode(AudioStreamBase *base) {
+    return base->getPrivacySensitiveMode();
+  }
+
+  bool AudioStreamBase_isContentSpatialized(AudioStreamBase *base) {
+    return base->isContentSpatialized();
+  }
+
+  SpatializationBehavior AudioStreamBase_getSpatializationBehavior(AudioStreamBase *base) {
+    return base->getSpatializationBehavior();
+  }
+
+  int32_t AudioStreamBase_getHardwareChannelCount(AudioStreamBase *base) {
+    return base->getHardwareChannelCount();
+  }
+
+  int32_t AudioStreamBase_getHardwareSampleRate(AudioStreamBase *base) {
+    return base->getHardwareSampleRate();
+  }
+
+  AudioFormat AudioStreamBase_getHardwareFormat(AudioStreamBase *base) {
+    return base->getHardwareFormat();
   }
 }

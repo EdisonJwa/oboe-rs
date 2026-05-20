@@ -53,6 +53,12 @@ impl IsFormat for f32 {
     const FORMAT: AudioFormat = AudioFormat::F32;
 }
 
+pub struct I24;
+
+impl IsFormat for I24 {
+    const FORMAT: AudioFormat = AudioFormat::I24;
+}
+
 /**
  * The trait for channel count marker types
  */

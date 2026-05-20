@@ -15,8 +15,8 @@ ANDROID_API-x86_64-linux-android := 21
 define bindgen-rules
 bindgen: bindgen-$(1)
 bindgen-$(1):
-	@cargo ndk --android-platform $$(ANDROID_API-$(1)) --target $(1) -- build --release --features generate-bindings
-	@cp target/$(1)/release/build/oboe-sys-*/out/bindings.rs sys/src/bindings_`echo $(1) | sed -r 's/^([^-]+).*$$$$/\1/'`.rs
+	@cargo ndk --platform $$(ANDROID_API-$(1)) --target $(1) -- build --release --features generate-bindings
+	@cp target/$(1)/release/build/oboe-sys-*/out/bindings.rs sys/src/bindings_`echo $(1) | sed -E 's/^([^-]+).*$$/\1/'`.rs
 endef
 
 $(foreach target,$(ANDROID_TARGETS),$(eval $(call bindgen-rules,$(target))))

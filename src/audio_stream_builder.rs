@@ -12,7 +12,7 @@ use crate::{set_input_callback, set_output_callback};
 use super::{
     audio_stream_base_fmt, wrap_status, AudioApi, AudioInputCallback, AudioOutputCallback,
     AudioStreamAsync, AudioStreamHandle, AudioStreamSync, ContentType, Input, InputPreset,
-    IsChannelCount, IsDirection, IsFormat, IsFrameType, Mono, Output, PerformanceMode,
+    IsChannelCount, IsDirection, IsFormat, IsFrameType, I24, Mono, Output, PerformanceMode,
     RawAudioStreamBase, Result, SampleRateConversionQuality, SessionId, SharingMode, Stereo,
     Unspecified, Usage,
 };
@@ -214,6 +214,10 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
 
     pub fn set_i16(self) -> AudioStreamBuilder<D, C, i16> {
         self.set_format::<i16>()
+    }
+
+    pub fn set_i24(self) -> AudioStreamBuilder<D, C, I24> {
+        self.set_format::<I24>()
     }
 
     pub fn set_f32(self) -> AudioStreamBuilder<D, C, f32> {

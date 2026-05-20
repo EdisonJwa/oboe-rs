@@ -1,0 +1,25 @@
+[package]
+name = "oboe-format-test"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+oboe = { path = "../.." }
+log = "0.4"
+android_logger = "0.14"
+ndk-glue = "0.7"
+ndk-sys = "0.4"
+
+[package.metadata.android]
+build_targets = ["aarch64-linux-android"]
+
+[package.metadata.android.sdk]
+min_sdk_version = 21
+target_sdk_version = 34
+
+[package.metadata.android.ndk]
+version = "28.2.13676358"

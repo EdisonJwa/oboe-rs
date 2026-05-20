@@ -1,5 +1,5 @@
 [workspace]
-members = ["sys", "demo", "examples/sine"]
+members = ["sys", "demo", "examples/sine", "examples/format-test"]
 resolver = "2"
 
 [workspace.package]

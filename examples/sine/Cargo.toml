@@ -1,0 +1,15 @@
+[package]
+name = "oboe-sine-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+oboe = { path = "../.." }
+log = "0.4"
+android_logger = "0.14"
+ndk-glue = "0.7"
+ndk-sys = "0.4"

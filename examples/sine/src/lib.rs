@@ -80,6 +80,25 @@ fn run_sine() -> Result<(), oboe::Error> {
     log::info!("  Sharing mode:    {:?}", stream.get_sharing_mode());
     log::info!("  XRun supported:  {}", stream.is_xrun_count_supported());
 
+    // New Oboe 1.10.0 API methods
+    log::info!("  Bytes per frame: {}", stream.get_bytes_per_frame());
+    log::info!("  Bytes per sample: {}", stream.get_bytes_per_sample());
+    log::info!("  Uses AAudio:     {}", stream.uses_aaudio());
+    log::info!("  Channel mask:    {:?}", stream.get_channel_mask());
+    log::info!("  HW channel count: {}", stream.get_hardware_channel_count());
+    log::info!("  HW sample rate:  {}", stream.get_hardware_sample_rate());
+    log::info!("  HW format:       {:?}", stream.get_hardware_format());
+    log::info!("  Allowed capture: {:?}", stream.get_allowed_capture_policy());
+    log::info!("  Privacy mode:    {:?}", stream.get_privacy_sensitive_mode());
+    log::info!("  Content spatialized: {}", stream.is_content_spatialized());
+    log::info!("  Spatialization:  {:?}", stream.get_spatialization_behavior());
+    log::info!("  Frames written:  {}", stream.get_frames_written());
+    log::info!("  Delay before close: {}ms", stream.get_delay_before_close_millis());
+    log::info!(
+        "  Perf hint enabled: {}",
+        stream.is_performance_hint_enabled()
+    );
+
     stream.start()?;
     log::info!("Stream started — playing 440 Hz sine for 5 seconds");
 

@@ -399,10 +399,12 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
 
     fn get_timestamp(&mut self, clock_id: i32 /* clockid_t */) -> Result<FrameTimestamp> {
         wrap_result(unsafe {
-            transmute(ffi::oboe_AudioStream_getTimestamp(
-                self._raw_stream_mut() as *mut _ as *mut c_void,
-                clock_id,
-            ))
+            transmute::<ffi::oboe_ResultWithValue<ffi::oboe_FrameTimestamp>, ffi::oboe_ResultWithValue<FrameTimestamp>>(
+                ffi::oboe_AudioStream_getTimestamp(
+                    self._raw_stream_mut() as *mut _ as *mut c_void,
+                    clock_id,
+                )
+            )
         })
     }
 

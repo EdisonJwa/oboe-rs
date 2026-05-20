@@ -1,13 +1,10 @@
-#![allow(unused_imports)]
-#![allow(dead_code)]
-
 use std::{
     env,
     path::{Path, PathBuf},
 };
 
 fn main() {
-    // Skip build on docs.rs and CI
+    // Skip build on docs.rs
     if matches!(env::var("DOCS_RS"), Ok(s) if s == "1") {
         return;
     }
@@ -19,96 +16,47 @@ fn main() {
     let target = env::var("TARGET").expect("TARGET is set by cargo.");
     let profile = env::var("PROFILE").expect("PROFILE is set by cargo.");
 
-    let builder = Builder::new(
-        "oboe",
-        env!("CARGO_PKG_VERSION"),
-        target,
-        profile,
-        "https://github.com/katyo/{package}-rs/releases/download/{version}/lib{package}-ext_{target}_{profile}.tar.gz",
-        out_dir,
-        src_dir,
-        ext_dir,
-    );
+    let builder = Builder::new(target, profile, out_dir, src_dir, ext_dir);
 
     builder.bindings();
     builder.library();
 
-    add_libdir(builder.lib_dir);
-
-    /*if cfg!(feature = "shared-stdcxx") {
-        add_lib("c++_shared", false);
-    } else {
-        add_lib("c++_static", false);
-    }*/
+    add_libdir(&builder.lib_dir);
 
     add_lib("oboe-ext", !cfg!(feature = "shared-link"));
-
     add_lib("log", false);
     add_lib("OpenSLES", false);
 }
 
 struct Builder {
     pub src_dir: PathBuf,
-
-    pub lib_url: String,
     pub lib_dir: PathBuf,
-
     pub ext_dir: PathBuf,
+    #[cfg(feature = "generate-bindings")]
     pub bind_file: PathBuf,
-
     pub target: String,
     pub profile: String,
 }
 
 impl Builder {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
-        package: impl AsRef<str>,
-        version: impl AsRef<str>,
-
         target: impl AsRef<str>,
         profile: impl AsRef<str>,
-
-        lib_url: impl AsRef<str>,
-
         out_dir: impl AsRef<Path>,
         src_dir: impl AsRef<Path>,
         ext_dir: impl AsRef<Path>,
     ) -> Self {
-        let package = package.as_ref();
-        let version = version.as_ref();
-        let profile = profile.as_ref();
-        let target = target.as_ref();
-
-        let lib_url = lib_url
-            .as_ref()
-            .replace("{package}", package)
-            .replace("{version}", version)
-            .replace("{target}", target)
-            .replace("{profile}", profile);
-
         let out_dir = out_dir.as_ref();
         let lib_dir = out_dir.join("library");
 
-        let src_dir = src_dir.as_ref().into();
-        let ext_dir = ext_dir.as_ref().into();
-
-        let bind_file = out_dir.join("bindings.rs");
-
-        let target = target.into();
-        let profile = profile.into();
-
         Self {
-            src_dir,
-
-            lib_url,
+            src_dir: src_dir.as_ref().into(),
             lib_dir,
-
-            ext_dir,
-            bind_file,
-
-            target,
-            profile,
+            ext_dir: ext_dir.as_ref().into(),
+            #[cfg(feature = "generate-bindings")]
+            bind_file: out_dir.join("bindings.rs"),
+            target: target.as_ref().into(),
+            profile: profile.as_ref().into(),
         }
     }
 
@@ -127,7 +75,6 @@ impl Builder {
 
         if target_os == "android" {
             let ndk_target = android_target(&target_arch);
-
             clang_args.push(format!("--target={}", ndk_target));
         }
 
@@ -137,7 +84,7 @@ impl Builder {
         let bindings = bindgen::Builder::default()
             .detect_include_paths(true)
             .clang_args(&clang_args)
-            .clang_args(&["-xc++", "-std=c++14"])
+            .clang_args(&["-xc++", "-std=c++17"])
             .clang_args(&[
                 format!("-I{}", ext_include.display()),
                 format!("-I{}", src_include.display()),
@@ -185,30 +132,9 @@ impl Builder {
     #[cfg(feature = "test")]
     pub fn library(&self) {}
 
-    #[cfg(all(not(feature = "test"), feature = "fetch-prebuilt"))]
+    #[cfg(not(feature = "test"))]
     pub fn library(&self) {
-        if self.lib_dir.is_dir() {
-            eprintln!(
-                "Prebuilt library {} already fetched to {}",
-                self.lib_url,
-                self.lib_dir.display()
-            );
-        } else {
-            eprintln!(
-                "Fetching prebuilt library {} to {}",
-                self.lib_url,
-                self.lib_dir.display()
-            );
-
-            fetch_unroll::Fetch::from(&self.lib_url)
-                .unroll()
-                .to(&self.lib_dir)
-                .expect("Prebuilt library should be fetched.");
-        }
-    }
-
-    #[cfg(all(not(feature = "test"), not(feature = "fetch-prebuilt")))]
-    pub fn library(&self) {
+        // Oboe C++ source files (matching upstream Oboe 1.10.0)
         let src_files = &[
             "aaudio/AAudioLoader.cpp",
             "aaudio/AudioStreamAAudio.cpp",
@@ -222,21 +148,28 @@ impl Builder {
             "common/FixedBlockReader.cpp",
             "common/FixedBlockWriter.cpp",
             "common/LatencyTuner.cpp",
+            "common/OboeExtensions.cpp",
+            "common/QuirksManager.cpp",
             "common/SourceFloatCaller.cpp",
             "common/SourceI16Caller.cpp",
             "common/SourceI24Caller.cpp",
             "common/SourceI32Caller.cpp",
+            "common/StabilizedCallback.cpp",
+            "common/Trace.cpp",
             "common/Utilities.cpp",
-            "common/QuirksManager.cpp",
+            "common/Version.cpp",
             "fifo/FifoBuffer.cpp",
             "fifo/FifoController.cpp",
             "fifo/FifoControllerBase.cpp",
             "fifo/FifoControllerIndirect.cpp",
-            "flowgraph/FlowGraphNode.cpp",
             "flowgraph/ChannelCountConverter.cpp",
             "flowgraph/ClipToRange.cpp",
+            "flowgraph/FlowGraphNode.cpp",
+            "flowgraph/Limiter.cpp",
             "flowgraph/ManyToMultiConverter.cpp",
+            "flowgraph/MonoBlend.cpp",
             "flowgraph/MonoToMultiConverter.cpp",
+            "flowgraph/MultiToManyConverter.cpp",
             "flowgraph/MultiToMonoConverter.cpp",
             "flowgraph/RampLinear.cpp",
             "flowgraph/SampleRateConverter.cpp",
@@ -244,10 +177,12 @@ impl Builder {
             "flowgraph/SinkI16.cpp",
             "flowgraph/SinkI24.cpp",
             "flowgraph/SinkI32.cpp",
+            "flowgraph/SinkI8_24.cpp",
             "flowgraph/SourceFloat.cpp",
             "flowgraph/SourceI16.cpp",
             "flowgraph/SourceI24.cpp",
             "flowgraph/SourceI32.cpp",
+            "flowgraph/SourceI8_24.cpp",
             "flowgraph/resampler/IntegerRatio.cpp",
             "flowgraph/resampler/LinearResampler.cpp",
             "flowgraph/resampler/MultiChannelResampler.cpp",
@@ -263,9 +198,6 @@ impl Builder {
             "opensles/EngineOpenSLES.cpp",
             "opensles/OpenSLESUtilities.cpp",
             "opensles/OutputMixerOpenSLES.cpp",
-            "common/StabilizedCallback.cpp",
-            "common/Trace.cpp",
-            "common/Version.cpp",
         ];
 
         let ext_files = &[
@@ -299,17 +231,12 @@ impl Builder {
             "-Wshadow-field",
             "-fno-rtti",
             "-fno-exceptions",
-            //"-Ofast",
         ] {
             library.flag(flag);
         }
         if self.profile == "debug" {
-            //library.flag("-Werror");
             library.define("OBOE_ENABLE_LOGGING", "1");
         }
-
-        library.static_flag(!cfg!(feature = "shared-link"));
-        library.shared_flag(cfg!(feature = "shared-link"));
 
         library.include(self.src_dir.join("include"));
         library.include(self.src_dir.join("src"));
@@ -328,22 +255,13 @@ impl Builder {
     }
 }
 
+#[cfg(feature = "generate-bindings")]
 fn android_target(target_arch: impl AsRef<str>) -> &'static str {
     match target_arch.as_ref() {
         "arm" => "armv7a-linux-androideabi",
         "aarch64" => "aarch64-linux-android",
         "x86" => "i686-linux-android",
         "x86_64" => "x86_64-linux-android",
-        arch => panic!("Unsupported architecture {}", arch),
-    }
-}
-
-fn rustc_target(target_arch: impl AsRef<str>) -> &'static str {
-    match target_arch.as_ref() {
-        "arm" => "armv7",
-        "aarch64" => "aarch64",
-        "x86" => "i686",
-        "x86_64" => "x86_64",
         arch => panic!("Unsupported architecture {}", arch),
     }
 }

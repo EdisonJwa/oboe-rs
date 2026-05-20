@@ -20,7 +20,6 @@ ndk-glue = "0.7"
 jni = "0.21"
 cc = "1"
 bindgen = "0.69"
-fetch_unroll = "0.3"
 glutin = "0.31"
 log = "0.4"
 android_logger = "0.13"
@@ -81,7 +80,6 @@ optional = true
 shared-link = ["oboe-sys/shared-link"]
 shared-stdcxx = ["oboe-sys/shared-stdcxx"]
 generate-bindings = ["oboe-sys/generate-bindings"]
-fetch-prebuilt = ["oboe-sys/fetch-prebuilt"]
 java-interface = ["ndk", "ndk-context", "jni"]
 doc-cfg = []
 

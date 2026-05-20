@@ -12,10 +12,6 @@ homepage.workspace = true
 edition.workspace = true
 include = ["/build.rs", "/src/*.rs", "/oboe/include", "/oboe/src", "/oboe-ext/include", "/oboe-ext/src", "/README.md"]
 
-[build-dependencies.fetch_unroll]
-workspace = true
-optional = true
-
 [build-dependencies.cc]
 workspace = true
 features = ["parallel"]
@@ -27,7 +23,6 @@ optional = true
 [features]
 shared-link = []
 generate-bindings = ["bindgen"]
-fetch-prebuilt = ["fetch_unroll"]
 shared-stdcxx = []
 test = []
 

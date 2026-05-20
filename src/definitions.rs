@@ -66,31 +66,36 @@ pub enum Direction {
  */
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
+#[allow(non_camel_case_types)]
 pub enum AudioFormat {
     Invalid = ffi::oboe_AudioFormat_Invalid,
 
     #[default]
     Unspecified = ffi::oboe_AudioFormat_Unspecified,
 
-    /**
-     * Signed 16-bit integers.
-     */
     I16 = ffi::oboe_AudioFormat_I16,
 
-    /**
-     * Signed 24-bit integers.
-     */
+    F32 = ffi::oboe_AudioFormat_Float,
+
     I24 = ffi::oboe_AudioFormat_I24,
 
-    /**
-     * Signed 32-bit integers.
-     */
     I32 = ffi::oboe_AudioFormat_I32,
 
-    /**
-     * Single precision floating points.
-     */
-    F32 = ffi::oboe_AudioFormat_Float,
+    IEC61937 = ffi::oboe_AudioFormat_IEC61937,
+
+    MP3 = ffi::oboe_AudioFormat_MP3,
+
+    AAC_LC = ffi::oboe_AudioFormat_AAC_LC,
+
+    AAC_HE_V1 = ffi::oboe_AudioFormat_AAC_HE_V1,
+
+    AAC_HE_V2 = ffi::oboe_AudioFormat_AAC_HE_V2,
+
+    AAC_ELD = ffi::oboe_AudioFormat_AAC_ELD,
+
+    AAC_XHE = ffi::oboe_AudioFormat_AAC_XHE,
+
+    OPUS = ffi::oboe_AudioFormat_OPUS,
 }
 
 /**

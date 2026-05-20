@@ -110,4 +110,51 @@ The shim provides:
 - PCM offload, compressed format support
 - flushFromFrame, partial data callback
 - OBOE_DISABLE_CONVERSION compile flag
-- getDeviceIds
+- getDeviceIds (replaces getDeviceId)
+
+## Completed Actions
+
+1. ✅ Updated Oboe submodule from 1.8.1 to 1.10.0
+2. ✅ Added 6 missing source files to build.rs (OboeExtensions, Limiter, MonoBlend, MultiToManyConverter, SinkI8_24, SourceI8_24)
+3. ✅ Removed deprecated `static_flag`/`shared_flag` calls from cc::Build
+4. ✅ Removed `fetch-prebuilt` feature and `fetch_unroll` dependency (always build from source)
+5. ✅ Regenerated bindings for all 4 Android architectures
+6. ✅ Removed `get_device_id`/`set_device_id` (Oboe 1.10.0 replaced mDeviceId with mDeviceIds)
+7. ✅ Added minimal sine output example (examples/sine/)
+8. ✅ Clean build verified for aarch64-linux-android (release + debug)
+9. ✅ All 4 Android targets build successfully
+10. ✅ Updated README with current build instructions and API
+
+## Runtime Verification Checklist
+
+When running on a real Android device, verify:
+
+- [ ] Stream opens without error
+- [ ] Sample rate matches device (typically 48000 Hz)
+- [ ] Channel count is Mono (1)
+- [ ] Frames per burst is reported correctly (varies by device)
+- [ ] Buffer capacity and size are reasonable
+- [ ] Performance mode is LowLatency
+- [ ] Sharing mode is Shared
+- [ ] XRun count is 0 or very low after 5s of playback
+- [ ] Increasing XRun count is treated as a bug (tune buffer size first)
+- [ ] Stream stops and closes cleanly
+
+Record these values from the sine example log output:
+
+```
+Sine callback initialized: rate=<SAMPLE_RATE>, delta=<DELTA>
+Stream opened successfully
+  Sample rate:      <VALUE>
+  Channel count:    <VALUE>
+  Format:           <VALUE>
+  Frames per burst: <VALUE>
+  Buffer capacity:  <VALUE>
+  Buffer size:      <VALUE>
+  Performance mode: <VALUE>
+  Sharing mode:     <VALUE>
+  XRun supported:   <VALUE>
+Stream started — playing 440 Hz sine for 5 seconds
+  XRun count:       <VALUE>
+Stream stopped and closed
+```

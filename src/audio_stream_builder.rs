@@ -392,27 +392,6 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
     }
 
     /**
-     * Request a stream to a specific audio input/output device given an audio device ID.
-     *
-     * In most cases, the primary device will be the appropriate device to use, and the
-     * device ID can be left unspecified.
-     *
-     * On Android, for example, the ID could be obtained from the Java AudioManager.
-     * AudioManager.getDevices() returns an array of AudioDeviceInfo[], which contains
-     * a getId() method (as well as other type information), that should be passed
-     * to this method.
-     *
-     * When `java-interface` feature is used you can call [`AudioDeviceInfo::request`](crate::AudioDeviceInfo::request) for listing devices info.
-     *
-     * Note that when using OpenSL ES, this will be ignored and the created
-     * stream will have device ID unspecified.
-     */
-    pub fn set_device_id(mut self, device_id: i32) -> Self {
-        self._raw_base_mut().mDeviceId = device_id;
-        self
-    }
-
-    /**
      * If true then Oboe might convert channel counts to achieve optimal results.
      * On some versions of Android for example, stereo streams could not use a FAST track.
      * So a mono stream might be used instead and duplicated to two channels.

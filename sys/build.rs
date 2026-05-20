@@ -256,12 +256,14 @@ impl Builder {
 }
 
 #[cfg(feature = "generate-bindings")]
-fn android_target(target_arch: impl AsRef<str>) -> &'static str {
+fn android_target(target_arch: impl AsRef<str>) -> String {
+    // NDK 28+ headers require API level 30+ for pthread_cond_clockwait
+    let api = 30;
     match target_arch.as_ref() {
-        "arm" => "armv7a-linux-androideabi",
-        "aarch64" => "aarch64-linux-android",
-        "x86" => "i686-linux-android",
-        "x86_64" => "x86_64-linux-android",
+        "arm" => format!("armv7a-linux-androideabi{}", api),
+        "aarch64" => format!("aarch64-linux-android{}", api),
+        "x86" => format!("i686-linux-android{}", api),
+        "x86_64" => format!("x86_64-linux-android{}", api),
         arch => panic!("Unsupported architecture {}", arch),
     }
 }

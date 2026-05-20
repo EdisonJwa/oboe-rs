@@ -55,19 +55,8 @@ pub trait AudioStreamBase {
      */
     fn get_sharing_mode(&self) -> SharingMode;
 
-    /**
-     * Get the performance mode of the stream
-     */
     fn get_performance_mode(&self) -> PerformanceMode;
 
-    /**
-     * Get the device identifier of the stream
-     */
-    fn get_device_id(&self) -> i32;
-
-    /**
-     * Get the usage for this stream
-     */
     fn get_usage(&self) -> Usage;
 
     /**
@@ -138,10 +127,6 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
         FromPrimitive::from_i32(self._raw_base().mPerformanceMode).unwrap()
     }
 
-    fn get_device_id(&self) -> i32 {
-        self._raw_base().mDeviceId
-    }
-
     fn get_usage(&self) -> Usage {
         FromPrimitive::from_i32(self._raw_base().mUsage).unwrap()
     }
@@ -175,11 +160,7 @@ pub(crate) fn audio_stream_base_fmt<T: AudioStreamBase>(
     base: &T,
     f: &mut fmt::Formatter<'_>,
 ) -> fmt::Result {
-    "DeviceId: ".fmt(f)?;
-    base.get_device_id().fmt(f)?;
-    "\nSessionId: ".fmt(f)?;
-    fmt::Debug::fmt(&base.get_session_id(), f)?;
-    "\nDirection: ".fmt(f)?;
+    "Direction: ".fmt(f)?;
     fmt::Debug::fmt(&base.get_direction(), f)?;
     if base.get_direction() == Direction::Input {
         "\nInput preset: ".fmt(f)?;

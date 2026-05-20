@@ -1,10 +1,10 @@
-# oboe-rs Audit — 2026-05-20
+# oboe-rs Audit — 2026-05-20 (updated after upgrade to Oboe 1.10.0)
 
 ## Project Structure
 
 ```
 oboe-rs/                    # Workspace root (safe Rust wrapper crate "oboe")
-├── Cargo.toml              # Workspace: members=[sys, demo], edition 2021
+├── Cargo.toml              # Workspace: members=[sys, demo, examples/sine], edition 2021
 ├── src/                    # Safe wrapper (~1300 LOC)
 │   ├── lib.rs              # Re-exports
 │   ├── definitions.rs      # Enums, Error, StreamState, SharingMode, PerformanceMode, etc.
@@ -12,26 +12,30 @@ oboe-rs/                    # Workspace root (safe Rust wrapper crate "oboe")
 │   ├── audio_stream.rs     # Stream traits (AudioStream, AudioStreamSafe, sync/async impls)
 │   ├── audio_stream_base.rs     # Stream property getters
 │   ├── audio_stream_callback.rs # Callback bridge (Rust traits → C function pointers)
-│   ├── type_guide.rs       # Phantom markers (Mono/Stereo, f32/i16, Input/Output)
+│   ├── type_guide.rs       # Phantom markers (Mono/Stereo, f32/i16/i32/I24, Input/Output)
 │   ├── private.rs          # Raw FFI marker traits
 │   ├── version.rs          # Oboe version from FFI constants
 │   └── java_interface/     # Optional: JNI device info, audio features
 ├── sys/                    # oboe-sys crate (unsafe FFI + C++ build)
-│   ├── Cargo.toml          # Features: shared-link, generate-bindings, fetch-prebuilt, test
+│   ├── Cargo.toml          # Features: shared-link, generate-bindings, shared-stdcxx
 │   ├── build.rs            # Compiles Oboe C++ + oboe-ext via `cc` crate
 │   ├── src/
 │   │   ├── lib.rs          # Conditional include of arch-specific bindings
-│   │   ├── bindings_aarch64.rs   # Pregenerated bindgen (~1696 LOC)
+│   │   ├── bindings_aarch64.rs   # Pregenerated bindgen (~1851 LOC)
 │   │   ├── bindings_armv7.rs
 │   │   ├── bindings_i686.rs
 │   │   └── bindings_x86_64.rs
-│   ├── oboe/               # Git submodule → google/oboe (currently 1.8.1)
+│   ├── oboe/               # Git submodule → google/oboe (currently 1.10.0)
 │   └── oboe-ext/           # C++ shim layer
+│       ├── CMakeLists.txt  # Source list (updated for 1.10.0)
 │       ├── include/oboe/OboeExt.h       # C-linkable wrapper functions
 │       └── src/
 │           ├── AudioStreamWrapper.cpp
 │           ├── AudioStreamBuilderWrapper.cpp
 │           └── AudioStreamCallbackWrapper.cpp
+├── examples/sine/          # Minimal sine output example (no egui)
+│   ├── Cargo.toml
+│   └── src/lib.rs          # 440Hz sine, 5s playback, logs stream params + xRun count
 └── demo/                   # Android egui demo (not minimal)
     ├── Cargo.toml          # Uses egui/eframe, cargo-mobile2
     └── src/
@@ -39,23 +43,24 @@ oboe-rs/                    # Workspace root (safe Rust wrapper crate "oboe")
         └── audio.rs        # Sine generator + device info printer
 ```
 
-## Current Oboe Version: 1.8.1
+## Current Oboe Version: 1.10.0
 
-Submodule `sys/oboe` is pinned at commit `86165b8249bc22b9ef70b69e20323244b6f08d88` (tag `1.8.1`).
-Latest Google Oboe stable release: **1.10.0**.
+Submodule `sys/oboe` is pinned at commit `a81bb9f8` (tag `1.10.0`).
 
 ## Build System
 
 - **Default path**: Compiles from source using `cc` crate (C++17, no RTTI/exceptions).
-- Source file list in `build.rs` is **hardcoded** — must be updated when Oboe adds/renames .cpp files.
-- `fetch-prebuilt` feature downloads prebuilt `.a` from original author's GitHub releases — **stale, should be removed**.
+- Source file list in `build.rs` is hardcoded — must be updated when Oboe adds/renames .cpp files.
+- `fetch-prebuilt` feature removed — always builds from source.
 - `generate-bindings` feature runs bindgen against `OboeExt.h`.
 - Pregenerated bindings in `sys/src/bindings_*.rs` are used by default.
+- Makefile bindgen rule uses `cargo ndk --platform` (fixed from `--android-platform`) and `sed -E` (macOS-compatible).
 
 ## Build Status
 
-- `cargo ndk --platform 21 --target aarch64-linux-android -- build --release` → **PASSES** for `oboe` and `oboe-sys`.
-- `cc` crate deprecation warnings: `static_flag()`/`shared_flag()` are deprecated.
+- All 4 Android targets (aarch64, armv7, x86_64, i686) build successfully in release mode.
+- Sine example builds successfully.
+- LSP diagnostics: zero errors.
 
 ## FFI Architecture
 
@@ -80,50 +85,23 @@ The shim provides:
 | Frames per burst | ✅ get_frames_per_burst |
 | Actual stream params | ✅ AudioStreamBase trait |
 | xRun count | ✅ get_xrun_count / is_xrun_count_supported |
-
-## Issues Found
-
-1. **Oboe submodule outdated** (1.8.1 → 1.10.0)
-2. **No minimal sine example** — demo requires egui/eframe/cargo-mobile2
-3. **`fetch-prebuilt` feature** depends on stale prebuilt binaries
-4. **`cc` deprecated warnings** — `static_flag`/`shared_flag`
-5. **CI uses NDK 25.2** — should update to NDK 27+
-6. **README mentions `compile-library` feature** which doesn't exist in Cargo.toml
-7. **Source file list** in `build.rs` may need new .cpp files from Oboe 1.9.x/1.10.x
-8. **`AudioFormat::I24`** in bindings but no `IsFormat for` 24-bit type in safe wrapper
-
-## Oboe Version Changes (1.8.1 → 1.10.0)
-
-### 1.9.0
-- IEC61937 compressed audio format
-- Improved resampler
-- USB device attach/detach events
-
-### 1.9.3
-- FullDuplexStream moved to std::shared_ptr (ownership change)
-- AudioClock utility
-- Static OpenSL ES linking support
-- 16KB page size support
-
-### 1.10.0
-- MMAP policy query (AAudio)
-- PCM offload, compressed format support
-- flushFromFrame, partial data callback
-- OBOE_DISABLE_CONVERSION compile flag
-- getDeviceIds (replaces getDeviceId)
+| I24 format | ✅ I24 struct + IsFormat impl + set_i24() builder method |
 
 ## Completed Actions
 
 1. ✅ Updated Oboe submodule from 1.8.1 to 1.10.0
-2. ✅ Added 6 missing source files to build.rs (OboeExtensions, Limiter, MonoBlend, MultiToManyConverter, SinkI8_24, SourceI8_24)
+2. ✅ Added missing source files to build.rs (OboeExtensions, Limiter, MonoBlend, MultiToManyConverter, SinkI8_24, SourceI8_24)
 3. ✅ Removed deprecated `static_flag`/`shared_flag` calls from cc::Build
 4. ✅ Removed `fetch-prebuilt` feature and `fetch_unroll` dependency (always build from source)
 5. ✅ Regenerated bindings for all 4 Android architectures
 6. ✅ Removed `get_device_id`/`set_device_id` (Oboe 1.10.0 replaced mDeviceId with mDeviceIds)
 7. ✅ Added minimal sine output example (examples/sine/)
-8. ✅ Clean build verified for aarch64-linux-android (release + debug)
-9. ✅ All 4 Android targets build successfully
+8. ✅ Clean build verified for all 4 Android targets (release mode)
+9. ✅ Added I24 format type (struct I24 + IsFormat impl + set_i24() builder)
 10. ✅ Updated README with current build instructions and API
+11. ✅ Fixed Makefile bindgen rule (--android-platform → --platform, sed -r → sed -E)
+12. ✅ Updated oboe-ext CMakeLists.txt with 10 missing Oboe 1.10.0 source files
+13. ✅ All commits pushed to origin/master
 
 ## Runtime Verification Checklist
 

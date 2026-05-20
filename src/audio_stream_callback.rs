@@ -259,8 +259,9 @@ unsafe extern "C" fn on_error_before_close_input_wrapper<T: AudioInputCallback>(
 ) {
     let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
     let callback = &mut *(context as *mut T);
+    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
 
-    callback.on_error_before_close(&mut audio_stream, FromPrimitive::from_i32(error).unwrap());
+    callback.on_error_before_close(&mut audio_stream, error);
 }
 
 unsafe extern "C" fn on_error_after_close_input_wrapper<T: AudioInputCallback>(
@@ -270,8 +271,9 @@ unsafe extern "C" fn on_error_after_close_input_wrapper<T: AudioInputCallback>(
 ) {
     let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
     let callback = &mut *(context as *mut T);
+    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
 
-    callback.on_error_after_close(&mut audio_stream, FromPrimitive::from_i32(error).unwrap());
+    callback.on_error_after_close(&mut audio_stream, error);
 }
 
 unsafe extern "C" fn on_audio_ready_input_wrapper<T: AudioInputCallback>(
@@ -300,8 +302,9 @@ unsafe extern "C" fn on_error_before_close_output_wrapper<T: AudioOutputCallback
     let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
 
     let callback = &mut *(context as *mut T);
+    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
 
-    callback.on_error_before_close(&mut audio_stream, FromPrimitive::from_i32(error).unwrap());
+    callback.on_error_before_close(&mut audio_stream, error);
 }
 
 unsafe extern "C" fn on_error_after_close_output_wrapper<T: AudioOutputCallback>(
@@ -311,8 +314,9 @@ unsafe extern "C" fn on_error_after_close_output_wrapper<T: AudioOutputCallback>
 ) {
     let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
     let callback = &mut *(context as *mut T);
+    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
 
-    callback.on_error_after_close(&mut audio_stream, FromPrimitive::from_i32(error).unwrap());
+    callback.on_error_after_close(&mut audio_stream, error);
 }
 
 unsafe extern "C" fn on_audio_ready_output_wrapper<T: AudioOutputCallback>(

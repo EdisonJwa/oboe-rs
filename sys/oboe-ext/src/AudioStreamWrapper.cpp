@@ -1,9 +1,10 @@
 #include "oboe/OboeExt.h"
+#include <new>
 
 namespace oboe {
   void AudioStreamShared_clone(const AudioStreamShared *sharedStream,
                                AudioStreamShared *newSharedStream) {
-    *newSharedStream = *sharedStream; // initialize with copy constructor
+    new (newSharedStream) AudioStreamShared(*sharedStream);
   }
 
   void AudioStreamShared_delete(AudioStreamShared *sharedStream) {

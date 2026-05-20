@@ -32,7 +32,7 @@ pub fn call_method_no_args_ret_int_array<'j>(
     let array: JIntArray = env.call_method(subject, method, "()[I", &[])?.l()?.into();
 
     let length = env.get_array_length(&array)?;
-    let mut values = Vec::with_capacity(length as usize);
+    let mut values = vec![0i32; length as usize];
 
     env.get_int_array_region(array, 0, values.as_mut())?;
 

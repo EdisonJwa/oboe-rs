@@ -26,9 +26,10 @@ pub const NANOS_PER_SECOND: i64 = NANOS_PER_MILLISECOND * MILLIS_PER_SECOND;
 /**
  * The state of the audio stream.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum StreamState {
+    #[default]
     Uninitialized = ffi::oboe_StreamState_Uninitialized,
     Unknown = ffi::oboe_StreamState_Unknown,
     Open = ffi::oboe_StreamState_Open,
@@ -48,12 +49,10 @@ pub enum StreamState {
 /**
  * The direction of the stream.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum Direction {
-    /**
-     * Used for playback.
-     */
+    #[default]
     Output = ffi::oboe_Direction_Output,
 
     /**
@@ -65,17 +64,12 @@ pub enum Direction {
 /**
  * The format of audio samples.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum AudioFormat {
-    /**
-     * Invalid format.
-     */
     Invalid = ffi::oboe_AudioFormat_Invalid,
 
-    /**
-     * Unspecified format. Format will be decided by Oboe.
-     */
+    #[default]
     Unspecified = ffi::oboe_AudioFormat_Unspecified,
 
     /**
@@ -130,7 +124,7 @@ pub(crate) fn wrap_status(result: i32) -> Status {
     if result == ffi::oboe_Result_OK {
         Ok(())
     } else {
-        Err(FromPrimitive::from_i32(result).unwrap())
+        Err(FromPrimitive::from_i32(result).unwrap_or(Error::Internal))
     }
 }
 
@@ -138,7 +132,7 @@ pub(crate) fn wrap_result<T>(result: ffi::oboe_ResultWithValue<T>) -> Result<T> 
     if result.mError == ffi::oboe_Result_OK {
         Ok(result.mValue)
     } else {
-        Err(FromPrimitive::from_i32(result.mError).unwrap())
+        Err(FromPrimitive::from_i32(result.mError).unwrap_or(Error::Internal))
     }
 }
 
@@ -177,38 +171,22 @@ impl fmt::Display for Error {
 /**
  * The sharing mode of the audio stream.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum SharingMode {
-    /**
-     * This will be the only stream using a particular source or sink.
-     * This mode will provide the lowest possible latency.
-     * You should close EXCLUSIVE streams immediately when you are not using them.
-     *
-     * If you do not need the lowest possible latency then we recommend using Shared,
-     * which is the default.
-     */
     Exclusive = ffi::oboe_SharingMode_Exclusive,
 
-    /**
-     * Multiple applications can share the same device.
-     * The data from output streams will be mixed by the audio service.
-     * The data for input streams will be distributed by the audio service.
-     *
-     * This will have higher latency than the EXCLUSIVE mode.
-     */
+    #[default]
     Shared = ffi::oboe_SharingMode_Shared,
 }
 
 /**
  * The performance mode of the audio stream.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum PerformanceMode {
-    /**
-     * No particular performance needs. Default.
-     */
+    #[default]
     None = ffi::oboe_PerformanceMode_None,
 
     /**
@@ -225,12 +203,10 @@ pub enum PerformanceMode {
 /**
  * The underlying audio API used by the audio stream.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum AudioApi {
-    /**
-     * Try to use AAudio. If not available then use OpenSL ES.
-     */
+    #[default]
     Unspecified = ffi::oboe_AudioApi_Unspecified,
 
     /**
@@ -249,12 +225,10 @@ pub enum AudioApi {
  * Higher quality will require more CPU load.
  * Higher quality conversion will probably be implemented using a sinc based resampler.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum SampleRateConversionQuality {
-    /**
-     * No conversion by Oboe. Underlying APIs may still do conversion.
-     */
+    #[default]
     None,
 
     /**
@@ -281,12 +255,10 @@ pub enum SampleRateConversionQuality {
  *
  * This attribute only has an effect on Android API 28+.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum Usage {
-    /**
-     * Use this for streaming media, music performance, video, podcasts, etcetera.
-     */
+    #[default]
     Media = ffi::oboe_Usage_Media,
 
     /**
@@ -358,17 +330,12 @@ pub enum Usage {
  *
  * This attribute only has an effect on Android API 28+.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum ContentType {
-    /**
-     * Use this for spoken voice, audio books, etcetera.
-     */
     Speech = ffi::oboe_ContentType_Speech,
 
-    /**
-     * Use this for pre-recorded or live music.
-     */
+    #[default]
     Music = ffi::oboe_ContentType_Music,
 
     /**
@@ -392,22 +359,14 @@ pub enum ContentType {
  *
  * This attribute only has an effect on Android API 28+.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum InputPreset {
-    /**
-     * Use this preset when other presets do not apply.
-     */
     Generic = ffi::oboe_InputPreset_Generic,
 
-    /**
-     * Use this preset when recording video.
-     */
     Camcorder = ffi::oboe_InputPreset_Camcorder,
 
-    /**
-     * Use this preset when doing speech recognition.
-     */
+    #[default]
     VoiceRecognition = ffi::oboe_InputPreset_VoiceRecognition,
 
     /**
@@ -435,14 +394,10 @@ pub enum InputPreset {
  *
  * This attribute only has an effect on Android API 28+.
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum SessionId {
-    /**
-     * Do not allocate a session ID.
-     * Effects cannot be used with this stream.
-     * Default.
-     */
+    #[default]
     None = ffi::oboe_SessionId_None,
 
     /**
@@ -464,12 +419,10 @@ pub enum SessionId {
  * `builder.set_channel_count(ChannelCount::Stereo)`
  * rather than `builder.set_channel_count(2).
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive, ToPrimitive, Default)]
 #[repr(i32)]
 pub enum ChannelCount {
-    /**
-     * Audio channel count definition, use Mono or Stereo
-     */
+    #[default]
     Unspecified = ffi::oboe_ChannelCount_Unspecified,
 
     /**

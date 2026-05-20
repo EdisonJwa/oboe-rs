@@ -92,11 +92,11 @@ pub trait AudioStreamBase {
 
 impl<T: RawAudioStreamBase> AudioStreamBase for T {
     fn get_channel_count(&self) -> ChannelCount {
-        FromPrimitive::from_i32(self._raw_base().mChannelCount).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mChannelCount).unwrap_or_default()
     }
 
     fn get_direction(&self) -> Direction {
-        FromPrimitive::from_i32(self._raw_base().mDirection).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mDirection).unwrap_or_default()
     }
 
     fn get_sample_rate(&self) -> i32 {
@@ -108,7 +108,7 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
     }
 
     fn get_format(&self) -> AudioFormat {
-        FromPrimitive::from_i32(self._raw_base().mFormat).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mFormat).unwrap_or_default()
     }
 
     fn get_buffer_size_in_frames(&self) -> i32 {
@@ -120,27 +120,27 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
     }
 
     fn get_sharing_mode(&self) -> SharingMode {
-        FromPrimitive::from_i32(self._raw_base().mSharingMode).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mSharingMode).unwrap_or_default()
     }
 
     fn get_performance_mode(&self) -> PerformanceMode {
-        FromPrimitive::from_i32(self._raw_base().mPerformanceMode).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mPerformanceMode).unwrap_or_default()
     }
 
     fn get_usage(&self) -> Usage {
-        FromPrimitive::from_i32(self._raw_base().mUsage).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mUsage).unwrap_or_default()
     }
 
     fn get_content_type(&self) -> ContentType {
-        FromPrimitive::from_i32(self._raw_base().mContentType).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mContentType).unwrap_or_default()
     }
 
     fn get_input_preset(&self) -> InputPreset {
-        FromPrimitive::from_i32(self._raw_base().mInputPreset).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mInputPreset).unwrap_or_default()
     }
 
     fn get_session_id(&self) -> SessionId {
-        FromPrimitive::from_i32(self._raw_base().mSessionId).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mSessionId).unwrap_or_default()
     }
 
     fn is_channel_conversion_allowed(&self) -> bool {
@@ -152,7 +152,7 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
     }
 
     fn get_sample_rate_conversion_quality(&self) -> SampleRateConversionQuality {
-        FromPrimitive::from_i32(self._raw_base().mSampleRateConversionQuality).unwrap()
+        FromPrimitive::from_i32(self._raw_base().mSampleRateConversionQuality).unwrap_or_default()
     }
 }
 

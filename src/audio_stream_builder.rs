@@ -248,7 +248,7 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
      */
     pub fn get_audio_api(&self) -> AudioApi {
         FromPrimitive::from_i32(unsafe { ffi::oboe_AudioStreamBuilder_getAudioApi(&**self.raw) })
-            .unwrap()
+            .unwrap_or(AudioApi::Unspecified)
     }
 
     /**

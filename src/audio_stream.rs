@@ -359,7 +359,7 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
         FromPrimitive::from_i32(unsafe {
             ffi::oboe_AudioStream_getState(self._raw_stream() as *const _ as *mut _)
         })
-        .unwrap()
+        .unwrap_or(StreamState::Unknown)
     }
 
     fn get_xrun_count(&self) -> Result<i32> {
@@ -395,7 +395,7 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
 
     fn get_audio_api(&self) -> AudioApi {
         FromPrimitive::from_i32(unsafe { ffi::oboe_AudioStream_getAudioApi(self._raw_stream()) })
-            .unwrap()
+            .unwrap_or(AudioApi::Unspecified)
     }
 
     fn get_available_frames(&mut self) -> Result<i32> {

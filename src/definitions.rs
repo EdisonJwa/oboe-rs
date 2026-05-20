@@ -194,15 +194,11 @@ pub enum PerformanceMode {
     #[default]
     None = ffi::oboe_PerformanceMode_None,
 
-    /**
-     * Extending battery life is most important.
-     */
     PowerSaving = ffi::oboe_PerformanceMode_PowerSaving,
 
-    /**
-     * Reducing latency is most important.
-     */
     LowLatency = ffi::oboe_PerformanceMode_LowLatency,
+
+    PowerSavingOffloaded = ffi::oboe_PerformanceMode_PowerSavingOffloaded,
 }
 
 /**

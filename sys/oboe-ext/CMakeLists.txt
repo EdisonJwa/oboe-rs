@@ -81,7 +81,7 @@ target_include_directories(oboe-ext
     PUBLIC include ${OBOE_DIR}/include)
 
 target_compile_options(oboe-ext PRIVATE
-    -std=c++14
+    -std=c++17
     -Wall
     -Wextra-semi
     -Wshadow

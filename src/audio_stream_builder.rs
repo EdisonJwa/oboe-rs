@@ -25,6 +25,8 @@ impl AudioStreamBuilderHandle {
     pub(crate) fn open_stream(&mut self) -> Result<AudioStreamHandle> {
         let mut stream = AudioStreamHandle::default();
 
+        // SAFETY: self is a valid AudioStreamBuilderHandle. stream is a zeroed
+        // (empty) shared_ptr that openStreamShared will initialize on success.
         wrap_status(unsafe {
             ffi::oboe_AudioStreamBuilder_openStreamShared(&mut **self, stream.as_mut())
         })
@@ -36,6 +38,9 @@ impl Default for AudioStreamBuilderHandle {
     fn default() -> Self {
         let mut raw = MaybeUninit::zeroed();
 
+        // SAFETY: oboe_AudioStreamBuilder_create writes to the provided pointer
+        // to initialize a valid AudioStreamBuilder. After the call, raw is fully
+        // initialized and assume_init is safe.
         Self(unsafe {
             ffi::oboe_AudioStreamBuilder_create(raw.as_mut_ptr());
             raw.assume_init()
@@ -45,6 +50,8 @@ impl Default for AudioStreamBuilderHandle {
 
 impl Drop for AudioStreamBuilderHandle {
     fn drop(&mut self) {
+        // SAFETY: self.0 is a valid AudioStreamBuilder constructed by
+        // AudioStreamBuilder_create. Calling delete frees C++ resources.
         unsafe { ffi::oboe_AudioStreamBuilder_delete(&mut **self) }
     }
 }
@@ -63,6 +70,50 @@ impl DerefMut for AudioStreamBuilderHandle {
     }
 }
 
+macro_rules! impl_builder_base {
+    ($name:ident < $($param:ident),+ >) => {
+        impl<$($param),+> Drop for $name<$($param),+> {
+            fn drop(&mut self) {
+                // SAFETY: self.raw is only dropped here, or taken in Self::destructs.
+                unsafe {
+                    ManuallyDrop::drop(&mut self.raw);
+                }
+            }
+        }
+
+        impl<$($param),+> fmt::Debug for $name<$($param),+> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                audio_stream_base_fmt(self, f)
+            }
+        }
+
+        impl<$($param),+> RawAudioStreamBase for $name<$($param),+> {
+            fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase {
+                // SAFETY: getBase returns a pointer to the base struct embedded in
+                // the builder. The builder is valid for the lifetime of self.
+                unsafe { &*ffi::oboe_AudioStreamBuilder_getBase(&**self.raw as *const _ as *mut _) }
+            }
+
+            fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase {
+                // SAFETY: Same as above, but mutable. self holds the only reference.
+                unsafe { &mut *ffi::oboe_AudioStreamBuilder_getBase(&mut **self.raw) }
+            }
+        }
+
+        impl<$($param),+> $name<$($param),+> {
+            fn destructs(mut self) -> AudioStreamBuilderHandle {
+                // SAFETY: ManuallyDrop::take extracts the inner value without running
+                // its destructor. forget(self) prevents Self::drop from double-dropping.
+                let raw = unsafe { ManuallyDrop::take(&mut self.raw) };
+
+                std::mem::forget(self);
+
+                raw
+            }
+        }
+    };
+}
+
 /**
  * Factory for an audio stream.
  */
@@ -72,30 +123,7 @@ pub struct AudioStreamBuilder<D, C, T> {
     _phantom: PhantomData<(D, C, T)>,
 }
 
-impl<D, C, T> Drop for AudioStreamBuilder<D, C, T> {
-    fn drop(&mut self) {
-        // SAFETY: self.raw is only drop here, or taken in Self::destructs, which don't drop self.
-        unsafe {
-            ManuallyDrop::drop(&mut self.raw);
-        }
-    }
-}
-
-impl<D, C, T> fmt::Debug for AudioStreamBuilder<D, C, T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        audio_stream_base_fmt(self, f)
-    }
-}
-
-impl<D, C, T> RawAudioStreamBase for AudioStreamBuilder<D, C, T> {
-    fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase {
-        unsafe { &*ffi::oboe_AudioStreamBuilder_getBase(&**self.raw as *const _ as *mut _) }
-    }
-
-    fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase {
-        unsafe { &mut *ffi::oboe_AudioStreamBuilder_getBase(&mut **self.raw) }
-    }
-}
+impl_builder_base!(AudioStreamBuilder<D, C, T>);
 
 impl Default for AudioStreamBuilder<Output, Unspecified, Unspecified> {
     /**
@@ -253,6 +281,7 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
      * returns true. Otherwise __OpenSL ES__ will be used.
      */
     pub fn get_audio_api(&self) -> AudioApi {
+        // SAFETY: self.raw is a valid builder handle. getAudioApi is a const method.
         FromPrimitive::from_i32(unsafe { ffi::oboe_AudioStreamBuilder_getAudioApi(&**self.raw) })
             .unwrap_or(AudioApi::Unspecified)
     }
@@ -268,6 +297,7 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
      * If the caller requests AAudio and it is supported then AAudio will be used.
      */
     pub fn set_audio_api(mut self, audio_api: AudioApi) -> Self {
+        // SAFETY: self.raw is a valid builder. setAudioApi stores the value.
         unsafe { ffi::oboe_AudioStreamBuilder_setAudioApi(&mut **self.raw, audio_api as i32) }
         self
     }
@@ -278,6 +308,7 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
      * AAudio was introduced in the Oreo 8.0 release.
      */
     pub fn is_aaudio_supported() -> bool {
+        // SAFETY: Static function, no pointer arguments.
         unsafe { ffi::oboe_AudioStreamBuilder_isAAudioSupported() }
     }
 
@@ -288,6 +319,7 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
      * AAudio is not recommended for Android 8.0 or earlier versions.
      */
     pub fn is_aaudio_recommended() -> bool {
+        // SAFETY: Static function, no pointer arguments.
         unsafe { ffi::oboe_AudioStreamBuilder_isAAudioRecommended() }
     }
 
@@ -474,16 +506,6 @@ impl<D, C, T> AudioStreamBuilder<D, C, T> {
         (audio_api == AudioApi::AAudio && Self::is_aaudio_supported())
             || (audio_api == AudioApi::Unspecified && Self::is_aaudio_recommended())
     }
-
-    /// Descontructs self into its handle, without calling drop.
-    fn destructs(mut self) -> AudioStreamBuilderHandle {
-        // Safety: the std::mem::forget prevents `raw` from being dropped by Self::drop.
-        let raw = unsafe { ManuallyDrop::take(&mut self.raw) };
-
-        std::mem::forget(self);
-
-        raw
-    }
 }
 
 impl<D: IsDirection, C: IsChannelCount, T: IsFormat> AudioStreamBuilder<D, C, T> {
@@ -575,42 +597,7 @@ pub struct AudioStreamBuilderAsync<D, F> {
     _phantom: PhantomData<(D, F)>,
 }
 
-impl<D, F> Drop for AudioStreamBuilderAsync<D, F> {
-    fn drop(&mut self) {
-        // SAFETY: self.raw is only droped here, or taken in Self::destructs, which don't drop self.
-        unsafe {
-            ManuallyDrop::drop(&mut self.raw);
-        }
-    }
-}
-
-impl<D, F> fmt::Debug for AudioStreamBuilderAsync<D, F> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        audio_stream_base_fmt(self, f)
-    }
-}
-
-impl<D, F> RawAudioStreamBase for AudioStreamBuilderAsync<D, F> {
-    fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase {
-        unsafe { &*ffi::oboe_AudioStreamBuilder_getBase(&**self.raw as *const _ as *mut _) }
-    }
-
-    fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase {
-        unsafe { &mut *ffi::oboe_AudioStreamBuilder_getBase(&mut **self.raw) }
-    }
-}
-
-impl<D, F> AudioStreamBuilderAsync<D, F> {
-    /// Descontructs self into its handle without calling drop.
-    fn destructs(mut self) -> AudioStreamBuilderHandle {
-        // Safety: the std::mem::forget prevents `raw` from being dropped by Self::drop.
-        let raw = unsafe { ManuallyDrop::take(&mut self.raw) };
-
-        std::mem::forget(self);
-
-        raw
-    }
-}
+impl_builder_base!(AudioStreamBuilderAsync<D, F>);
 
 impl<F: AudioInputCallback + Send> AudioStreamBuilderAsync<Input, F> {
     /**

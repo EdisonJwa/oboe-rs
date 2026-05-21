@@ -1,5 +1,6 @@
 use std::{
     ffi::c_void,
+    panic::{catch_unwind, AssertUnwindSafe},
     slice::{from_raw_parts, from_raw_parts_mut},
 };
 
@@ -248,33 +249,56 @@ pub(crate) fn set_output_callback<T: AudioOutputCallback>(
 }
 
 unsafe extern "C" fn drop_context<T>(context: *mut c_void) {
-    let context = Box::from_raw(context as *mut T);
-    drop(context);
+    // SAFETY: context was created by Box::into_raw in set_*_callback.
+    // catch_unwind prevents panic from crossing the FFI boundary.
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        let context = Box::from_raw(context as *mut T);
+        drop(context);
+    }));
 }
 
-unsafe extern "C" fn on_error_before_close_input_wrapper<T: AudioInputCallback>(
-    context: *mut c_void,
-    audio_stream: *mut ffi::oboe_AudioStream,
-    error: ffi::oboe_Result,
-) {
-    let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
-    let callback = &mut *(context as *mut T);
-    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
+macro_rules! impl_error_callback_wrapper {
+    ($fn_name:ident, $trait:path, $method:ident) => {
+        unsafe extern "C" fn $fn_name<T: $trait>(
+            context: *mut c_void,
+            audio_stream: *mut ffi::oboe_AudioStream,
+            error: ffi::oboe_Result,
+        ) {
+            // SAFETY: The context pointer is a Box<T> created by set_*_callback
+            // and remains valid for the entire callback lifetime because the
+            // AudioStreamCallbackWrapper holds a shared_ptr reference.
+            // audio_stream is a valid pointer passed by Oboe from its error callback thread.
+            let _ = catch_unwind(AssertUnwindSafe(|| {
+                let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
+                let callback = &mut *(context as *mut T);
+                let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
 
-    callback.on_error_before_close(&mut audio_stream, error);
+                callback.$method(&mut audio_stream, error);
+            }));
+        }
+    };
 }
 
-unsafe extern "C" fn on_error_after_close_input_wrapper<T: AudioInputCallback>(
-    context: *mut c_void,
-    audio_stream: *mut ffi::oboe_AudioStream,
-    error: ffi::oboe_Result,
-) {
-    let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
-    let callback = &mut *(context as *mut T);
-    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
-
-    callback.on_error_after_close(&mut audio_stream, error);
-}
+impl_error_callback_wrapper!(
+    on_error_before_close_input_wrapper,
+    AudioInputCallback,
+    on_error_before_close
+);
+impl_error_callback_wrapper!(
+    on_error_after_close_input_wrapper,
+    AudioInputCallback,
+    on_error_after_close
+);
+impl_error_callback_wrapper!(
+    on_error_before_close_output_wrapper,
+    AudioOutputCallback,
+    on_error_before_close
+);
+impl_error_callback_wrapper!(
+    on_error_after_close_output_wrapper,
+    AudioOutputCallback,
+    on_error_after_close
+);
 
 unsafe extern "C" fn on_audio_ready_input_wrapper<T: AudioInputCallback>(
     context: *mut c_void,
@@ -282,41 +306,21 @@ unsafe extern "C" fn on_audio_ready_input_wrapper<T: AudioInputCallback>(
     audio_data: *mut c_void,
     num_frames: i32,
 ) -> ffi::oboe_DataCallbackResult {
-    let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
+    // SAFETY: catch_unwind prevents panic from crossing the FFI boundary.
+    // If the user callback panics, we return Stop to halt the stream safely.
+    catch_unwind(AssertUnwindSafe(|| {
+        let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
 
-    let audio_data = from_raw_parts(
-        audio_data as *const <T::FrameType as IsFrameType>::Type,
-        num_frames as usize,
-    );
+        let audio_data = from_raw_parts(
+            audio_data as *const <T::FrameType as IsFrameType>::Type,
+            num_frames as usize,
+        );
 
-    let callback = &mut *(context as *mut T);
+        let callback = &mut *(context as *mut T);
 
-    callback.on_audio_ready(&mut audio_stream, audio_data) as i32
-}
-
-unsafe extern "C" fn on_error_before_close_output_wrapper<T: AudioOutputCallback>(
-    context: *mut c_void,
-    audio_stream: *mut ffi::oboe_AudioStream,
-    error: ffi::oboe_Result,
-) {
-    let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
-
-    let callback = &mut *(context as *mut T);
-    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
-
-    callback.on_error_before_close(&mut audio_stream, error);
-}
-
-unsafe extern "C" fn on_error_after_close_output_wrapper<T: AudioOutputCallback>(
-    context: *mut c_void,
-    audio_stream: *mut ffi::oboe_AudioStream,
-    error: ffi::oboe_Result,
-) {
-    let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
-    let callback = &mut *(context as *mut T);
-    let error = FromPrimitive::from_i32(error).unwrap_or(Error::Internal);
-
-    callback.on_error_after_close(&mut audio_stream, error);
+        callback.on_audio_ready(&mut audio_stream, audio_data) as i32
+    }))
+    .unwrap_or(ffi::oboe_DataCallbackResult_Stop)
 }
 
 unsafe extern "C" fn on_audio_ready_output_wrapper<T: AudioOutputCallback>(
@@ -325,14 +329,17 @@ unsafe extern "C" fn on_audio_ready_output_wrapper<T: AudioOutputCallback>(
     audio_data: *mut c_void,
     num_frames: i32,
 ) -> ffi::oboe_DataCallbackResult {
-    let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
+    catch_unwind(AssertUnwindSafe(|| {
+        let mut audio_stream = AudioStreamRef::wrap_raw(&mut *audio_stream);
 
-    let audio_data = from_raw_parts_mut(
-        audio_data as *mut <T::FrameType as IsFrameType>::Type,
-        num_frames as usize,
-    );
+        let audio_data = from_raw_parts_mut(
+            audio_data as *mut <T::FrameType as IsFrameType>::Type,
+            num_frames as usize,
+        );
 
-    let callback = &mut *(context as *mut T);
+        let callback = &mut *(context as *mut T);
 
-    callback.on_audio_ready(&mut audio_stream, audio_data) as i32
+        callback.on_audio_ready(&mut audio_stream, audio_data) as i32
+    }))
+    .unwrap_or(ffi::oboe_DataCallbackResult_Stop)
 }

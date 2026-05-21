@@ -18,8 +18,14 @@ pub fn with_attached<F, R>(context: AndroidContext, closure: F) -> JResult<R>
 where
     for<'j> F: FnOnce(&mut JNIEnv<'j>, JObject<'j>) -> JResult<R>,
 {
+    // SAFETY: context.vm() returns a valid JavaVM pointer from ndk_context,
+    // which is set by Android's native activity startup. The cast converts
+    // the pointer type for jni-rs consumption.
     let vm = Arc::new(unsafe { JavaVM::from_raw(context.vm().cast())? });
     let context = context.context();
+    // SAFETY: context.context() returns a valid jobject from ndk_context.
+    // JObject::from_raw wraps it without incrementing the JNI reference count;
+    // the object remains valid for the duration of the Executor callback.
     let context = unsafe { JObject::from_raw(context as jobject) };
     Executor::new(vm).with_attached(|env| closure(env, context))
 }

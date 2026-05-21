@@ -230,21 +230,24 @@ pub enum AudioApi {
 #[repr(i32)]
 pub enum SampleRateConversionQuality {
     #[default]
-    None,
+    None = ffi::oboe_SampleRateConversionQuality_None,
 
     /**
      * Fastest conversion but may not sound great.
      * This may be implemented using bilinear interpolation.
      */
-    Fastest,
-    Low,
-    Medium,
-    High,
+    Fastest = ffi::oboe_SampleRateConversionQuality_Fastest,
+
+    Low = ffi::oboe_SampleRateConversionQuality_Low,
+
+    Medium = ffi::oboe_SampleRateConversionQuality_Medium,
+
+    High = ffi::oboe_SampleRateConversionQuality_High,
 
     /**
      * Highest quality conversion, which may be expensive in terms of CPU.
      */
-    Best,
+    Best = ffi::oboe_SampleRateConversionQuality_Best,
 }
 
 /**
@@ -574,10 +577,15 @@ impl DefaultStreamValues {
      * The default sample rate to use when opening new audio streams
      */
     pub fn get_sample_rate() -> i32 {
+        // SAFETY: Reading a static mut global. Safe as long as no concurrent
+        // write occurs (see set_sample_rate SAFETY note).
         unsafe { ffi::oboe_DefaultStreamValues_SampleRate }
     }
 
     pub fn set_sample_rate(sample_rate: i32) {
+        // SAFETY: Writing a static mut global. Caller must ensure no concurrent
+        // read or write from another thread — typically called once at startup
+        // before any streams are created.
         unsafe {
             ffi::oboe_DefaultStreamValues_SampleRate = sample_rate;
         }
@@ -587,10 +595,12 @@ impl DefaultStreamValues {
      * The default frames per burst to use when opening new audio streams
      */
     pub fn get_frames_per_burst() -> i32 {
+        // SAFETY: Reading a static mut global. Same concurrency caveat as above.
         unsafe { ffi::oboe_DefaultStreamValues_FramesPerBurst }
     }
 
     pub fn set_frames_per_burst(frames_per_burst: i32) {
+        // SAFETY: Writing a static mut global. Same concurrency caveat as above.
         unsafe {
             ffi::oboe_DefaultStreamValues_FramesPerBurst = frames_per_burst;
         }
@@ -600,10 +610,12 @@ impl DefaultStreamValues {
      * The default channel count to use when opening new audio streams
      */
     pub fn get_channel_count() -> i32 {
+        // SAFETY: Reading a static mut global. Same concurrency caveat as above.
         unsafe { ffi::oboe_DefaultStreamValues_ChannelCount }
     }
 
     pub fn set_channel_count(channel_count: i32) {
+        // SAFETY: Writing a static mut global. Same concurrency caveat as above.
         unsafe {
             ffi::oboe_DefaultStreamValues_ChannelCount = channel_count;
         }

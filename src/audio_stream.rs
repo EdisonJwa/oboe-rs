@@ -355,16 +355,19 @@ pub trait AudioOutputStreamSync: AudioOutputStream {
 
 impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
     fn release(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe { ffi::oboe_AudioStream_release(self._raw_stream_mut()) })
     }
 
     fn set_buffer_size_in_frames(&mut self, requested_frames: i32) -> Result<i32> {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_result(unsafe {
             ffi::oboe_AudioStream_setBufferSizeInFrames(self._raw_stream_mut(), requested_frames)
         })
     }
 
     fn get_state(&self) -> StreamState {
+        // SAFETY: _raw_stream() returns a valid pointer from the live shared_ptr.
         FromPrimitive::from_i32(unsafe {
             ffi::oboe_AudioStream_getState(self._raw_stream() as *const _ as *mut _)
         })
@@ -372,52 +375,65 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
     }
 
     fn get_xrun_count(&self) -> Result<i32> {
+        // SAFETY: _raw_stream() returns a valid pointer from the live shared_ptr.
         wrap_result(unsafe {
             ffi::oboe_AudioStream_getXRunCount(self._raw_stream() as *const _ as *mut _)
         })
     }
 
     fn is_xrun_count_supported(&self) -> bool {
+        // SAFETY: _raw_stream() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_isXRunCountSupported(self._raw_stream()) }
     }
 
     fn get_frames_per_burst(&mut self) -> i32 {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_getFramesPerBurst(self._raw_stream_mut()) }
     }
 
     fn get_bytes_per_frame(&mut self) -> i32 {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_getBytesPerFrame(self._raw_stream_mut()) }
     }
 
     fn get_bytes_per_sample(&mut self) -> i32 {
+        // SAFETY: _raw_stream() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_getBytesPerSample(self._raw_stream()) }
     }
 
     fn calculate_latency_millis(&mut self) -> Result<f64> {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_result(unsafe { ffi::oboe_AudioStream_calculateLatencyMillis(self._raw_stream_mut()) })
     }
 
     fn get_timestamp(&mut self, clock_id: i32 /* clockid_t */) -> Result<FrameTimestamp> {
+        // SAFETY: _raw_stream_mut() is valid. transmute is safe because
+        // ffi::oboe_FrameTimestamp and FrameTimestamp have identical layouts
+        // (both are repr(C) with the same fields).
         wrap_result(unsafe {
-            transmute::<ffi::oboe_ResultWithValue<ffi::oboe_FrameTimestamp>, ffi::oboe_ResultWithValue<FrameTimestamp>>(
-                ffi::oboe_AudioStream_getTimestamp(
-                    self._raw_stream_mut() as *mut _ as *mut c_void,
-                    clock_id,
-                )
-            )
+            transmute::<
+                ffi::oboe_ResultWithValue<ffi::oboe_FrameTimestamp>,
+                ffi::oboe_ResultWithValue<FrameTimestamp>,
+            >(ffi::oboe_AudioStream_getTimestamp(
+                self._raw_stream_mut() as *mut _ as *mut c_void,
+                clock_id,
+            ))
         })
     }
 
     fn get_audio_api(&self) -> AudioApi {
+        // SAFETY: _raw_stream() returns a valid pointer from the live shared_ptr.
         FromPrimitive::from_i32(unsafe { ffi::oboe_AudioStream_getAudioApi(self._raw_stream()) })
             .unwrap_or(AudioApi::Unspecified)
     }
 
     fn uses_aaudio(&self) -> bool {
+        // SAFETY: _raw_stream() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_usesAAudio(self._raw_stream() as *const _ as *mut _) }
     }
 
     fn get_available_frames(&mut self) -> Result<i32> {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_result(unsafe { ffi::oboe_AudioStream_getAvailableFrames(self._raw_stream_mut()) })
     }
 
@@ -426,6 +442,7 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
         num_frames: i32,
         timeout_nanoseconds: i64,
     ) -> Result<i32> {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_result(unsafe {
             ffi::oboe_AudioStream_waitForAvailableFrames(
                 self._raw_stream_mut(),
@@ -436,38 +453,46 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStreamSafe for T {
     }
 
     fn get_last_error_callback_result(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe {
             ffi::oboe_AudioStream_getLastErrorCallbackResult(self._raw_stream_mut())
         })
     }
 
     fn get_delay_before_close_millis(&mut self) -> i32 {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_getDelayBeforeCloseMillis(self._raw_stream_mut()) }
     }
 
     fn set_delay_before_close_millis(&mut self, delay: i32) {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_setDelayBeforeCloseMillis(self._raw_stream_mut(), delay) }
     }
 
     fn set_performance_hint_enabled(&mut self, enabled: bool) {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_setPerformanceHintEnabled(self._raw_stream_mut(), enabled) }
     }
 
     fn is_performance_hint_enabled(&mut self) -> bool {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe { ffi::oboe_AudioStream_isPerformanceHintEnabled(self._raw_stream_mut()) }
     }
 }
 
 impl<T: RawAudioStream + RawAudioStreamBase> AudioStream for T {
     fn open(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe { ffi::oboe_AudioStream_open(self._raw_stream_mut()) })
     }
 
     fn close(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe { ffi::oboe_AudioStream_close1(self._raw_stream_mut()) })
     }
 
     fn start_with_timeout(&mut self, timeout_nanoseconds: i64) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe {
             ffi::oboe_AudioStream_start(
                 self._raw_stream_mut() as *mut _ as *mut c_void,
@@ -477,6 +502,7 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStream for T {
     }
 
     fn stop_with_timeout(&mut self, timeout_nanoseconds: i64) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe {
             ffi::oboe_AudioStream_stop(
                 self._raw_stream_mut() as *mut _ as *mut c_void,
@@ -486,10 +512,12 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStream for T {
     }
 
     fn request_start(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe { ffi::oboe_AudioStream_requestStart(self._raw_stream_mut()) })
     }
 
     fn request_stop(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe { ffi::oboe_AudioStream_requestStop(self._raw_stream_mut()) })
     }
 
@@ -499,6 +527,8 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStream for T {
         timeout_nanoseconds: i64,
     ) -> Result<StreamState> {
         let mut next_state = MaybeUninit::<StreamState>::uninit();
+        // SAFETY: self._raw_stream_mut() is valid. next_state is an out-parameter
+        // that Oboe writes to on success (Result::OK).
         wrap_status(unsafe {
             ffi::oboe_AudioStream_waitForStateChange(
                 self._raw_stream_mut(),
@@ -507,12 +537,17 @@ impl<T: RawAudioStream + RawAudioStreamBase> AudioStream for T {
                 timeout_nanoseconds,
             )
         })
-        .map(|_| unsafe { next_state.assume_init() })
+        .map(|_| {
+            // SAFETY: Oboe wrote to next_state on success (Result::OK).
+            // On error, this branch is not taken.
+            unsafe { next_state.assume_init() }
+        })
     }
 }
 
 impl<T: RawAudioInputStream + RawAudioStream + RawAudioStreamBase> AudioInputStreamSafe for T {
     fn get_frames_read(&mut self) -> i64 {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe {
             ffi::oboe_AudioStream_getFramesRead(self._raw_stream_mut() as *mut _ as *mut c_void)
         }
@@ -523,6 +558,7 @@ impl<T: RawAudioInputStream + RawAudioStream + RawAudioStreamBase> AudioInputStr
 
 impl<T: RawAudioOutputStream + RawAudioStream + RawAudioStreamBase> AudioOutputStreamSafe for T {
     fn get_frames_written(&mut self) -> i64 {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         unsafe {
             ffi::oboe_AudioStream_getFramesWritten(self._raw_stream_mut() as *mut _ as *mut c_void)
         }
@@ -531,6 +567,7 @@ impl<T: RawAudioOutputStream + RawAudioStream + RawAudioStreamBase> AudioOutputS
 
 impl<T: RawAudioOutputStream + RawAudioStream + RawAudioStreamBase> AudioOutputStream for T {
     fn pause_with_timeout(&mut self, timeout_nanoseconds: i64) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe {
             ffi::oboe_AudioStream_pause(
                 self._raw_stream_mut() as *mut _ as *mut c_void,
@@ -540,6 +577,7 @@ impl<T: RawAudioOutputStream + RawAudioStream + RawAudioStreamBase> AudioOutputS
     }
 
     fn flush_with_timeout(&mut self, timeout_nanoseconds: i64) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe {
             ffi::oboe_AudioStream_flush(
                 self._raw_stream_mut() as *mut _ as *mut c_void,
@@ -549,10 +587,12 @@ impl<T: RawAudioOutputStream + RawAudioStream + RawAudioStreamBase> AudioOutputS
     }
 
     fn request_pause(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe { ffi::oboe_AudioStream_requestPause(self._raw_stream_mut()) })
     }
 
     fn request_flush(&mut self) -> Status {
+        // SAFETY: _raw_stream_mut() returns a valid pointer from the live shared_ptr.
         wrap_status(unsafe { ffi::oboe_AudioStream_requestFlush(self._raw_stream_mut()) })
     }
 }
@@ -576,11 +616,18 @@ pub(crate) fn audio_stream_fmt<T: AudioStreamSafe>(
 
 pub(crate) struct AudioStreamHandle(ffi::oboe_AudioStreamShared);
 
+// SAFETY: AudioStreamHandle wraps a std::shared_ptr<AudioStream>. The shared_ptr
+// itself is thread-safe for copies (reference counting is atomic). The underlying
+// AudioStream uses internal mutexes for start/stop/close. We allow Send so streams
+// can be moved between threads, but NOT Sync since &mut access must be exclusive.
+unsafe impl Send for AudioStreamHandle {}
+
 impl Clone for AudioStreamHandle {
     fn clone(&self) -> Self {
-        // We free to clone shared pointers
         let mut new = Self::default();
 
+        // SAFETY: self.0 is a valid shared_ptr. oboe_AudioStreamShared_clone
+        // copies it into new, incrementing the refcount.
         unsafe { ffi::oboe_AudioStreamShared_clone(&self.0, new.as_mut()) };
 
         new
@@ -588,16 +635,19 @@ impl Clone for AudioStreamHandle {
 }
 
 impl Drop for AudioStreamHandle {
-    /// SAFETY: `self.0` must be valid pointers.
     fn drop(&mut self) {
-        // The error callback could be holding a shared_ptr, so don't delete AudioStream
-        // directly, but only its shared_ptr.
+        // SAFETY: self.0 is a valid AudioStreamShared (shared_ptr<AudioStream>).
+        // Calling delete decrements the refcount; if this is the last reference,
+        // the shared_ptr destructor runs. The error callback could be holding a
+        // shared_ptr, so we only delete the shared_ptr, not the AudioStream directly.
         unsafe { ffi::oboe_AudioStreamShared_delete(&mut self.0 as *mut _) };
     }
 }
 
 impl Default for AudioStreamHandle {
     fn default() -> Self {
+        // SAFETY: On Android NDK (libc++), a zero-initialized shared_ptr
+        // is a valid empty shared_ptr per the C++ standard.
         Self(unsafe { MaybeUninit::zeroed().assume_init() })
     }
 }
@@ -618,12 +668,16 @@ impl Deref for AudioStreamHandle {
     type Target = ffi::oboe_AudioStream;
 
     fn deref(&self) -> &Self::Target {
+        // SAFETY: oboe_AudioStreamShared_deref returns a pointer to the
+        // AudioStream held by the shared_ptr. The shared_ptr is valid.
         unsafe { &*ffi::oboe_AudioStreamShared_deref(&self.0 as *const _ as *mut _) }
     }
 }
 
 impl DerefMut for AudioStreamHandle {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        // SAFETY: Same as Deref, but mutable. We hold &mut self, so
+        // exclusive access is guaranteed.
         unsafe { &mut *ffi::oboe_AudioStreamShared_deref(&mut self.0) }
     }
 }
@@ -654,10 +708,13 @@ impl<'s, D> AudioStreamRef<'s, D> {
 
 impl<'s, D> RawAudioStreamBase for AudioStreamRef<'s, D> {
     fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase {
+        // SAFETY: self.raw is a valid reference obtained from the callback context.
+        // getBase returns a pointer to the embedded base struct.
         unsafe { &*ffi::oboe_AudioStream_getBase(self.raw as *const _ as *mut _) }
     }
 
     fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase {
+        // SAFETY: Same as above, but mutable. We hold &mut self.
         unsafe { &mut *ffi::oboe_AudioStream_getBase(self.raw) }
     }
 }
@@ -676,117 +733,84 @@ impl<'s> RawAudioInputStream for AudioStreamRef<'s, Input> {}
 
 impl<'s> RawAudioOutputStream for AudioStreamRef<'s, Output> {}
 
-/**
- * The audio stream for asynchronous (callback-driven) mode
- */
-pub struct AudioStreamAsync<D, F> {
-    raw: AudioStreamHandle,
-    _phantom: PhantomData<(D, F)>,
-}
-
-impl<D, F> fmt::Debug for AudioStreamAsync<D, F> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        audio_stream_fmt(self, f)
-    }
-}
-
-impl<D, F> AudioStreamAsync<D, F> {
-    // SAFETY: `raw` must be valid.
-    pub(crate) fn wrap_handle(raw: AudioStreamHandle) -> Self {
-        Self {
-            raw,
-            _phantom: PhantomData,
+macro_rules! impl_stream_wrapper {
+    (
+        $(#[$meta:meta])*
+        $name:ident
+    ) => {
+        $(#[$meta])*
+        pub struct $name<D, F> {
+            raw: AudioStreamHandle,
+            _phantom: PhantomData<(D, F)>,
         }
-    }
-}
 
-impl<D, F> Drop for AudioStreamAsync<D, F> {
-    fn drop(&mut self) {
-        // SAFETY: As long as the conditions on Self::wrap_raw are guaranteed on the creation of
-        // self, this is safe.
-        let _ = self.close();
-    }
-}
+        // SAFETY: Wraps an AudioStreamHandle (Send) and PhantomData.
+        // The underlying Oboe AudioStream is thread-safe for move operations.
+        // D and F markers don't carry data. The callback is owned by the C++ side.
+        unsafe impl<D: Send, F: Send> Send for $name<D, F> {}
 
-impl<D, T> RawAudioStreamBase for AudioStreamAsync<D, T> {
-    fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase {
-        unsafe { &*ffi::oboe_AudioStream_getBase(&*self.raw as *const _ as *mut _) }
-    }
-
-    fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase {
-        unsafe { &mut *ffi::oboe_AudioStream_getBase(&mut *self.raw as *mut _) }
-    }
-}
-
-impl<D, F> RawAudioStream for AudioStreamAsync<D, F> {
-    fn _raw_stream(&self) -> &ffi::oboe_AudioStream {
-        &self.raw
-    }
-
-    fn _raw_stream_mut(&mut self) -> &mut ffi::oboe_AudioStream {
-        &mut self.raw
-    }
-}
-
-impl<F> RawAudioInputStream for AudioStreamAsync<Input, F> {}
-
-impl<F> RawAudioOutputStream for AudioStreamAsync<Output, F> {}
-
-/**
- * The audio stream for synchronous (blocking) mode
- */
-pub struct AudioStreamSync<D, F> {
-    raw: AudioStreamHandle,
-    _phantom: PhantomData<(D, F)>,
-}
-
-impl<D, F> fmt::Debug for AudioStreamSync<D, F> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        audio_stream_fmt(self, f)
-    }
-}
-
-impl<D, F> AudioStreamSync<D, F> {
-    // SAFETY: `raw` must be valid.
-    pub(crate) fn wrap_handle(raw: AudioStreamHandle) -> Self {
-        Self {
-            raw,
-            _phantom: PhantomData,
+        impl<D, F> fmt::Debug for $name<D, F> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                audio_stream_fmt(self, f)
+            }
         }
-    }
+
+        impl<D, F> $name<D, F> {
+            pub(crate) fn wrap_handle(raw: AudioStreamHandle) -> Self {
+                Self {
+                    raw,
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<D, F> Drop for $name<D, F> {
+            fn drop(&mut self) {
+                // SAFETY: close() is safe to call on an already-closed stream
+                // (Oboe returns ErrorClosed). The shared_ptr in
+                // AudioStreamHandle releases its reference in its own Drop.
+                let _ = self.close();
+            }
+        }
+
+        impl<D, T> RawAudioStreamBase for $name<D, T> {
+            fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase {
+                // SAFETY: self.raw derefs to a valid oboe_AudioStream via Deref.
+                // getBase returns a pointer to the embedded base struct.
+                unsafe { &*ffi::oboe_AudioStream_getBase(&*self.raw as *const _ as *mut _) }
+            }
+
+            fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase {
+                // SAFETY: Same as above, but mutable. We hold &mut self.
+                unsafe { &mut *ffi::oboe_AudioStream_getBase(&mut *self.raw as *mut _) }
+            }
+        }
+
+        impl<D, F> RawAudioStream for $name<D, F> {
+            fn _raw_stream(&self) -> &ffi::oboe_AudioStream {
+                &self.raw
+            }
+
+            fn _raw_stream_mut(&mut self) -> &mut ffi::oboe_AudioStream {
+                &mut self.raw
+            }
+        }
+
+        impl<F> RawAudioInputStream for $name<Input, F> {}
+
+        impl<F> RawAudioOutputStream for $name<Output, F> {}
+    };
 }
 
-impl<D, F> Drop for AudioStreamSync<D, F> {
-    fn drop(&mut self) {
-        // SAFETY: As long as the conditions on Self::wrap_raw are guaranteed on the creation of
-        // self, this is safe.
-        let _ = self.close();
-    }
-}
+impl_stream_wrapper!(
+    /// The audio stream for asynchronous (callback-driven) mode
+    AudioStreamAsync
+);
 
-impl<D, T> RawAudioStreamBase for AudioStreamSync<D, T> {
-    fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase {
-        unsafe { &*ffi::oboe_AudioStream_getBase(&*self.raw as *const _ as *mut _) }
-    }
-
-    fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase {
-        unsafe { &mut *ffi::oboe_AudioStream_getBase(&mut *self.raw as *mut _) }
-    }
-}
-
-impl<D, F> RawAudioStream for AudioStreamSync<D, F> {
-    fn _raw_stream(&self) -> &ffi::oboe_AudioStream {
-        &self.raw
-    }
-
-    fn _raw_stream_mut(&mut self) -> &mut ffi::oboe_AudioStream {
-        &mut self.raw
-    }
-}
-
-impl<F> RawAudioInputStream for AudioStreamSync<Input, F> {}
-
-impl<F> RawAudioOutputStream for AudioStreamSync<Output, F> {}
+impl_stream_wrapper!(
+    /// The audio stream for synchronous (blocking) mode
+    AudioStreamSync
+);
 
 impl<F: IsFrameType> AudioInputStreamSync for AudioStreamSync<Input, F> {
     type FrameType = F;
@@ -796,6 +820,8 @@ impl<F: IsFrameType> AudioInputStreamSync for AudioStreamSync<Input, F> {
         buffer: &mut [<Self::FrameType as IsFrameType>::Type],
         timeout_nanoseconds: i64,
     ) -> Result<i32> {
+        // SAFETY: self.raw derefs to a valid oboe_AudioStream. buffer is a
+        // valid mutable slice; as_mut_ptr() + len() provide valid pointer/length.
         wrap_result(unsafe {
             ffi::oboe_AudioStream_read(
                 &mut *self.raw,
@@ -815,6 +841,9 @@ impl<F: IsFrameType> AudioOutputStreamSync for AudioStreamSync<Output, F> {
         buffer: &[<Self::FrameType as IsFrameType>::Type],
         timeout_nanoseconds: i64,
     ) -> Result<i32> {
+        // SAFETY: self.raw derefs to a valid oboe_AudioStream. buffer is a
+        // valid slice; as_ptr() + len() provide valid pointer/length. The C++
+        // side only reads from the buffer (output stream write).
         wrap_result(unsafe {
             ffi::oboe_AudioStream_write(
                 &mut *self.raw,

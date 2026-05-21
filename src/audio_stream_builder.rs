@@ -523,25 +523,25 @@ impl<D: IsDirection, C: IsChannelCount, T: IsFormat> AudioStreamBuilder<D, C, T>
     }
 }
 
+/**
+ * Specifies an object to handle data or error related callbacks from the underlying API.
+ *
+ * __Important: See AudioStreamCallback for restrictions on what may be called
+ * from the callback methods.__
+ *
+ * When an error callback occurs, the associated stream will be stopped and closed in a separate thread.
+ *
+ * A note on why the streamCallback parameter is a raw pointer rather than a smart pointer:
+ *
+ * The caller should retain ownership of the object streamCallback points to. At first glance weak_ptr may seem like
+ * a good candidate for streamCallback as this implies temporary ownership. However, a weak_ptr can only be created
+ * from a shared_ptr. A shared_ptr incurs some performance overhead. The callback object is likely to be accessed
+ * every few milliseconds when the stream requires new data so this overhead is something we want to avoid.
+ *
+ * This leaves a raw pointer as the logical type choice. The only caveat being that the caller must not destroy
+ * the callback before the stream has been closed.
+ */
 impl<C: IsChannelCount, T: IsFormat> AudioStreamBuilder<Input, C, T> {
-    /**
-     * Specifies an object to handle data or error related callbacks from the underlying API.
-     *
-     * __Important: See AudioStreamCallback for restrictions on what may be called
-     * from the callback methods.__
-     *
-     * When an error callback occurs, the associated stream will be stopped and closed in a separate thread.
-     *
-     * A note on why the streamCallback parameter is a raw pointer rather than a smart pointer:
-     *
-     * The caller should retain ownership of the object streamCallback points to. At first glance weak_ptr may seem like
-     * a good candidate for streamCallback as this implies temporary ownership. However, a weak_ptr can only be created
-     * from a shared_ptr. A shared_ptr incurs some performance overhead. The callback object is likely to be accessed
-     * every few milliseconds when the stream requires new data so this overhead is something we want to avoid.
-     *
-     * This leaves a raw pointer as the logical type choice. The only caveat being that the caller must not destroy
-     * the callback before the stream has been closed.
-     */
     pub fn set_callback<F>(self, stream_callback: F) -> AudioStreamBuilderAsync<Input, F>
     where
         F: AudioInputCallback<FrameType = (T, C)>,
@@ -557,24 +557,6 @@ impl<C: IsChannelCount, T: IsFormat> AudioStreamBuilder<Input, C, T> {
 }
 
 impl<C: IsChannelCount, T: IsFormat> AudioStreamBuilder<Output, C, T> {
-    /**
-     * Specifies an object to handle data or error related callbacks from the underlying API.
-     *
-     * __Important: See AudioStreamCallback for restrictions on what may be called
-     * from the callback methods.__
-     *
-     * When an error callback occurs, the associated stream will be stopped and closed in a separate thread.
-     *
-     * A note on why the streamCallback parameter is a raw pointer rather than a smart pointer:
-     *
-     * The caller should retain ownership of the object streamCallback points to. At first glance weak_ptr may seem like
-     * a good candidate for streamCallback as this implies temporary ownership. However, a weak_ptr can only be created
-     * from a shared_ptr. A shared_ptr incurs some performance overhead. The callback object is likely to be accessed
-     * every few milliseconds when the stream requires new data so this overhead is something we want to avoid.
-     *
-     * This leaves a raw pointer as the logical type choice. The only caveat being that the caller must not destroy
-     * the callback before the stream has been closed.
-     */
     pub fn set_callback<F>(self, stream_callback: F) -> AudioStreamBuilderAsync<Output, F>
     where
         F: AudioOutputCallback<FrameType = (T, C)>,
@@ -599,18 +581,21 @@ pub struct AudioStreamBuilderAsync<D, F> {
 
 impl_builder_base!(AudioStreamBuilderAsync<D, F>);
 
+impl<D, F> AudioStreamBuilderAsync<D, F> {
+    fn open_async_stream(raw: AudioStreamBuilderHandle) -> Result<AudioStreamAsync<D, F>> {
+        let mut raw = raw;
+        let stream = raw.open_stream().map(AudioStreamAsync::wrap_handle);
+        drop(raw);
+        stream
+    }
+}
+
 impl<F: AudioInputCallback + Send> AudioStreamBuilderAsync<Input, F> {
     /**
      * Create and open an asynchronous (callback-driven) input stream based on the current settings.
      */
     pub fn open_stream(self) -> Result<AudioStreamAsync<Input, F>> {
-        let mut raw = self.destructs();
-
-        let stream = raw.open_stream().map(AudioStreamAsync::wrap_handle);
-
-        drop(raw);
-
-        stream
+        Self::open_async_stream(self.destructs())
     }
 }
 
@@ -619,12 +604,6 @@ impl<F: AudioOutputCallback + Send> AudioStreamBuilderAsync<Output, F> {
      * Create and open an asynchronous (callback-driven) output stream based on the current settings.
      */
     pub fn open_stream(self) -> Result<AudioStreamAsync<Output, F>> {
-        let mut raw = self.destructs();
-
-        let stream = raw.open_stream().map(AudioStreamAsync::wrap_handle);
-
-        drop(raw);
-
-        stream
+        Self::open_async_stream(self.destructs())
     }
 }

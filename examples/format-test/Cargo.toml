@@ -17,6 +17,16 @@ ndk-sys = "0.4"
 [package.metadata.android]
 build_targets = ["aarch64-linux-android"]
 
+[package.metadata.android.android]
+app-permissions = [
+  "android.permission.RECORD_AUDIO",
+]
+app-features = [
+  "android.hardware.audio.output",
+  "android.hardware.microphone",
+  "android.hardware.audio.low_latency",
+]
+
 [package.metadata.android.sdk]
 min_sdk_version = 21
 target_sdk_version = 34

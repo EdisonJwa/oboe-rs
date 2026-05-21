@@ -91,18 +91,12 @@ pub trait AudioStreamBase {
      * Get the raw system audio session ID.
      *
      * After the stream is opened with `SessionId::Allocate`, AAudio
-     * assigns a positive system session ID. This method returns that
-     * raw value (`Some(id)` where id > 0). `get_session_id()` is
-     * limited to builder parameters (`None` / `Allocate`) because the
+     * assigns a positive system session ID. Returns that raw value
+     * (`Some(id)` where id > 0), or `None` if no session was allocated.
+     * `get_session_id()` only returns builder parameters because the
      * `SessionId` enum has no `Allocated(i32)` variant.
-     *
-     * Returns `None` if no session was allocated (stream not yet
-     * opened, or `SessionId::None` was passed at build time).
      */
-    fn get_raw_session_id(&self) -> Option<i32> {
-        let raw = self._raw_base().mSessionId;
-        if raw > 0 { Some(raw) } else { None }
-    }
+    fn get_raw_session_id(&self) -> Option<i32>;
 
     /**
      * Return true if can convert channel counts to achieve optimal results.
@@ -178,6 +172,11 @@ impl<T: RawAudioStreamBase> AudioStreamBase for T {
     raw_enum_getter!(get_content_type, mContentType, ContentType);
     raw_enum_getter!(get_input_preset, mInputPreset, InputPreset);
     raw_enum_getter!(get_session_id, mSessionId, SessionId);
+
+    fn get_raw_session_id(&self) -> Option<i32> {
+        let raw = self._raw_base().mSessionId;
+        if raw > 0 { Some(raw) } else { None }
+    }
 
     raw_field_getter!(
         is_channel_conversion_allowed,

@@ -103,102 +103,75 @@ pub trait AudioStreamBase {
     fn get_sample_rate_conversion_quality(&self) -> SampleRateConversionQuality;
 }
 
+macro_rules! raw_enum_getter {
+    ($method:ident, $field:ident, $enum_type:ty) => {
+        fn $method(&self) -> $enum_type {
+            FromPrimitive::from_i32(self._raw_base().$field).unwrap_or_default()
+        }
+    };
+}
+
+macro_rules! raw_u32_enum_getter {
+    ($method:ident, $field:ident, $enum_type:ty) => {
+        fn $method(&self) -> $enum_type {
+            FromPrimitive::from_u32(self._raw_base().$field).unwrap_or_default()
+        }
+    };
+}
+
+macro_rules! raw_field_getter {
+    ($method:ident, $field:ident, $ret_type:ty) => {
+        fn $method(&self) -> $ret_type {
+            self._raw_base().$field
+        }
+    };
+}
+
 impl<T: RawAudioStreamBase> AudioStreamBase for T {
-    fn get_channel_count(&self) -> ChannelCount {
-        FromPrimitive::from_i32(self._raw_base().mChannelCount).unwrap_or_default()
-    }
-
-    fn get_channel_mask(&self) -> ChannelMask {
-        FromPrimitive::from_u32(self._raw_base().mChannelMask).unwrap_or_default()
-    }
-
-    fn get_direction(&self) -> Direction {
-        FromPrimitive::from_i32(self._raw_base().mDirection).unwrap_or_default()
-    }
-
-    fn get_sample_rate(&self) -> i32 {
-        self._raw_base().mSampleRate
-    }
-
-    fn get_frames_per_callback(&self) -> i32 {
-        self._raw_base().mFramesPerCallback
-    }
-
-    fn get_format(&self) -> AudioFormat {
-        FromPrimitive::from_i32(self._raw_base().mFormat).unwrap_or_default()
-    }
-
-    fn get_hardware_format(&self) -> AudioFormat {
-        FromPrimitive::from_i32(self._raw_base().mHardwareFormat).unwrap_or_default()
-    }
-
-    fn get_buffer_size_in_frames(&self) -> i32 {
-        self._raw_base().mBufferSizeInFrames
-    }
-
-    fn get_buffer_capacity_in_frames(&self) -> i32 {
-        self._raw_base().mBufferCapacityInFrames
-    }
-
-    fn get_sharing_mode(&self) -> SharingMode {
-        FromPrimitive::from_i32(self._raw_base().mSharingMode).unwrap_or_default()
-    }
-
-    fn get_performance_mode(&self) -> PerformanceMode {
-        FromPrimitive::from_i32(self._raw_base().mPerformanceMode).unwrap_or_default()
-    }
-
-    fn get_usage(&self) -> Usage {
-        FromPrimitive::from_i32(self._raw_base().mUsage).unwrap_or_default()
-    }
-
-    fn get_allowed_capture_policy(&self) -> AllowedCapturePolicy {
-        FromPrimitive::from_i32(self._raw_base().mAllowedCapturePolicy).unwrap_or_default()
-    }
-
-    fn get_privacy_sensitive_mode(&self) -> PrivacySensitiveMode {
-        FromPrimitive::from_i32(self._raw_base().mPrivacySensitiveMode).unwrap_or_default()
-    }
-
-    fn is_content_spatialized(&self) -> bool {
-        self._raw_base().mIsContentSpatialized
-    }
-
-    fn get_spatialization_behavior(&self) -> SpatializationBehavior {
-        FromPrimitive::from_i32(self._raw_base().mSpatializationBehavior).unwrap_or_default()
-    }
-
-    fn get_hardware_channel_count(&self) -> i32 {
-        self._raw_base().mHardwareChannelCount
-    }
-
-    fn get_hardware_sample_rate(&self) -> i32 {
-        self._raw_base().mHardwareSampleRate
-    }
-
-    fn get_content_type(&self) -> ContentType {
-        FromPrimitive::from_i32(self._raw_base().mContentType).unwrap_or_default()
-    }
-
-    fn get_input_preset(&self) -> InputPreset {
-        FromPrimitive::from_i32(self._raw_base().mInputPreset).unwrap_or_default()
-    }
-
-    fn get_session_id(&self) -> SessionId {
-        FromPrimitive::from_i32(self._raw_base().mSessionId).unwrap_or_default()
-    }
-
-    fn is_channel_conversion_allowed(&self) -> bool {
-        self._raw_base().mChannelConversionAllowed
-    }
-
-    fn is_format_conversion_allowed(&self) -> bool {
-        self._raw_base().mFormatConversionAllowed
-    }
-
-    fn get_sample_rate_conversion_quality(&self) -> SampleRateConversionQuality {
-        FromPrimitive::from_i32(self._raw_base().mSampleRateConversionQuality).unwrap_or_default()
-    }
+    raw_enum_getter!(get_channel_count, mChannelCount, ChannelCount);
+    raw_u32_enum_getter!(get_channel_mask, mChannelMask, ChannelMask);
+    raw_enum_getter!(get_direction, mDirection, Direction);
+    raw_field_getter!(get_sample_rate, mSampleRate, i32);
+    raw_field_getter!(get_frames_per_callback, mFramesPerCallback, i32);
+    raw_enum_getter!(get_format, mFormat, AudioFormat);
+    raw_enum_getter!(get_hardware_format, mHardwareFormat, AudioFormat);
+    raw_field_getter!(get_buffer_size_in_frames, mBufferSizeInFrames, i32);
+    raw_field_getter!(get_buffer_capacity_in_frames, mBufferCapacityInFrames, i32);
+    raw_enum_getter!(get_sharing_mode, mSharingMode, SharingMode);
+    raw_enum_getter!(get_performance_mode, mPerformanceMode, PerformanceMode);
+    raw_enum_getter!(get_usage, mUsage, Usage);
+    raw_enum_getter!(
+        get_allowed_capture_policy,
+        mAllowedCapturePolicy,
+        AllowedCapturePolicy
+    );
+    raw_enum_getter!(
+        get_privacy_sensitive_mode,
+        mPrivacySensitiveMode,
+        PrivacySensitiveMode
+    );
+    raw_field_getter!(is_content_spatialized, mIsContentSpatialized, bool);
+    raw_enum_getter!(
+        get_spatialization_behavior,
+        mSpatializationBehavior,
+        SpatializationBehavior
+    );
+    raw_field_getter!(get_hardware_channel_count, mHardwareChannelCount, i32);
+    raw_field_getter!(get_hardware_sample_rate, mHardwareSampleRate, i32);
+    raw_enum_getter!(get_content_type, mContentType, ContentType);
+    raw_enum_getter!(get_input_preset, mInputPreset, InputPreset);
+    raw_enum_getter!(get_session_id, mSessionId, SessionId);
+    raw_field_getter!(
+        is_channel_conversion_allowed,
+        mChannelConversionAllowed,
+        bool
+    );
+    raw_field_getter!(is_format_conversion_allowed, mFormatConversionAllowed, bool);
+    raw_enum_getter!(
+        get_sample_rate_conversion_quality,
+        mSampleRateConversionQuality,
+        SampleRateConversionQuality
+    );
 }
 
 pub(crate) fn audio_stream_base_fmt<T: AudioStreamBase>(

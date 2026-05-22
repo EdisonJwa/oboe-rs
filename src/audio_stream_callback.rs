@@ -231,8 +231,7 @@ pub(crate) fn set_output_callback<T: AudioOutputCallback>(
     builder: &mut AudioStreamBuilderHandle,
     callback: T,
 ) {
-    let callback = Box::new(callback);
-    let callback = Box::into_raw(callback);
+    let callback = Box::into_raw(Box::new(callback));
 
     // SAFETY: `callback` has the same type as the first argument of each function, and each
     // function follows the C ABI.

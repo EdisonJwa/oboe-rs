@@ -1,6 +1,7 @@
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::FromPrimitive;
 use oboe_sys as ffi;
+use std::ffi::{c_char, CStr};
 use std::{error, fmt, result};
 
 /**
@@ -624,4 +625,22 @@ pub struct FrameTimestamp {
      * The timestamp in nanoseconds
      */
     pub timestamp: i64,
+}
+
+pub struct Version;
+
+impl Version {
+    pub const MAJOR: u8 = ffi::oboe_Version_Major;
+
+    pub const MINOR: u8 = ffi::oboe_Version_Minor;
+
+    pub const PATCH: u16 = ffi::oboe_Version_Patch;
+
+    pub const NUMBER: u32 = ffi::oboe_Version_Number;
+
+    pub fn text() -> &'static str {
+        unsafe { CStr::from_ptr(ffi::oboe_Version_Text.as_ptr() as *const c_char) }
+            .to_str()
+            .unwrap_or("")
+    }
 }

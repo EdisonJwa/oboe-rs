@@ -144,11 +144,11 @@ impl AudioDeviceDirection {
     }
 
     pub fn is_input(&self) -> bool {
-        0 < *self as i32 & AudioDeviceDirection::Input as i32
+        (*self as i32 & AudioDeviceDirection::Input as i32) != 0
     }
 
     pub fn is_output(&self) -> bool {
-        0 < *self as i32 & AudioDeviceDirection::Output as i32
+        (*self as i32 & AudioDeviceDirection::Output as i32) != 0
     }
 }
 

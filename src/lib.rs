@@ -6,9 +6,7 @@ mod audio_stream_base;
 mod audio_stream_builder;
 mod audio_stream_callback;
 mod definitions;
-mod private;
 mod type_guide;
-mod version;
 
 #[cfg(feature = "java-interface")]
 mod java_interface;
@@ -18,9 +16,23 @@ pub use self::audio_stream_base::*;
 pub use self::audio_stream_builder::*;
 pub use self::audio_stream_callback::*;
 pub use self::definitions::*;
-pub(crate) use self::private::*;
 pub use self::type_guide::*;
-pub use self::version::*;
 
 #[cfg(feature = "java-interface")]
 pub use self::java_interface::*;
+
+use oboe_sys as ffi;
+
+pub(crate) trait RawAudioStreamBase {
+    fn _raw_base(&self) -> &ffi::oboe_AudioStreamBase;
+    fn _raw_base_mut(&mut self) -> &mut ffi::oboe_AudioStreamBase;
+}
+
+pub(crate) trait RawAudioStream {
+    fn _raw_stream(&self) -> &ffi::oboe_AudioStream;
+    fn _raw_stream_mut(&mut self) -> &mut ffi::oboe_AudioStream;
+}
+
+pub(crate) trait RawAudioInputStream {}
+
+pub(crate) trait RawAudioOutputStream {}

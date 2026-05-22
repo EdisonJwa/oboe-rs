@@ -514,12 +514,7 @@ impl<D: IsDirection, C: IsChannelCount, T: IsFormat> AudioStreamBuilder<D, C, T>
      */
     pub fn open_stream(self) -> Result<AudioStreamSync<D, (T, C)>> {
         let mut raw = self.destructs();
-
-        let stream = raw.open_stream().map(AudioStreamSync::wrap_handle);
-
-        drop(raw);
-
-        stream
+        raw.open_stream().map(AudioStreamSync::wrap_handle)
     }
 }
 
@@ -582,11 +577,8 @@ pub struct AudioStreamBuilderAsync<D, F> {
 impl_builder_base!(AudioStreamBuilderAsync<D, F>);
 
 impl<D, F> AudioStreamBuilderAsync<D, F> {
-    fn open_async_stream(raw: AudioStreamBuilderHandle) -> Result<AudioStreamAsync<D, F>> {
-        let mut raw = raw;
-        let stream = raw.open_stream().map(AudioStreamAsync::wrap_handle);
-        drop(raw);
-        stream
+    fn open_async_stream(mut raw: AudioStreamBuilderHandle) -> Result<AudioStreamAsync<D, F>> {
+        raw.open_stream().map(AudioStreamAsync::wrap_handle)
     }
 }
 
